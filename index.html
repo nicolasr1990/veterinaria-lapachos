@@ -1064,26 +1064,37 @@
         function renderProveedores() {
             const container = document.getElementById('proveedores-table-container');
 
-            // Filter only with pending balance
-            const withDebt = appData.proveedores.filter(p => p.pendiente > 0);
-
-            if (withDebt.length === 0) {
+            if (appData.proveedores.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">✅</div>
-                        <p>¡No hay deudas pendientes con proveedores!</p>
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay proveedores registrados</p>
                     </div>
                 `;
                 return;
             }
 
-            const totalDebt = withDebt.reduce((sum, p) => sum + p.pendiente, 0);
+            // Calculate totals
+            const totalDebt = appData.proveedores.reduce((sum, p) => sum + p.pendiente, 0);
+            const totalAccumulated = appData.proveedores.reduce((sum, p) => sum + p.totalAcumulado, 0);
+            const totalPaid = appData.proveedores.reduce((sum, p) => sum + p.pagado, 0);
 
             let html = `
-                <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
-                    <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ADEUDADO</div>
-                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--danger-color);">${formatCurrency(totalDebt)}</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="padding: 1rem; background: rgba(139, 21, 56, 0.1); border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ACUMULADO</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(totalAccumulated)}</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 4px solid var(--success-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL PAGADO</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color);">${formatCurrency(totalPaid)}</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ADEUDADO</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color);">${formatCurrency(totalDebt)}</div>
+                    </div>
                 </div>
+                
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -1097,13 +1108,19 @@
                     <tbody>
             `;
 
-            withDebt.forEach(item => {
+            // Sort by pending amount (highest first)
+            const sorted = [...appData.proveedores].sort((a, b) => b.pendiente - a.pendiente);
+
+            sorted.forEach(item => {
+                const hasDebt = item.pendiente > 0;
+                const rowClass = hasDebt ? 'style="background: rgba(239, 68, 68, 0.05);"' : '';
+                
                 html += `
-                    <tr>
+                    <tr ${rowClass}>
                         <td style="font-weight: 600;">${item.nombre}</td>
                         <td class="amount">${formatCurrency(item.totalAcumulado)}</td>
                         <td class="amount positive">${formatCurrency(item.pagado)}</td>
-                        <td class="amount negative" style="font-weight: 700;">${formatCurrency(item.pendiente)}</td>
+                        <td class="amount ${hasDebt ? 'negative' : ''}" style="${hasDebt ? 'font-weight: 700;' : ''}">${formatCurrency(item.pendiente)}</td>
                         <td>${formatDate(item.ultimaFactura)}</td>
                     </tr>
                 `;
@@ -1181,11 +1198,15 @@
                 // Handle different date formats
                 let date;
                 
-                // If it's already in MM/DD/YYYY or DD/MM/YYYY format
+                // If it's in D/M/YYYY format (from Google Sheets Argentina)
                 if (dateString.includes('/')) {
                     const parts = dateString.split('/');
-                    // Assuming MM/DD/YYYY format from Google Sheets
-                    date = new Date(parts[2], parts[0] - 1, parts[1]);
+                    // Format is DD/MM/YYYY (Argentine format)
+                    const day = parseInt(parts[0]);
+                    const month = parseInt(parts[1]);
+                    const year = parseInt(parts[2]);
+                    
+                    date = new Date(year, month - 1, day);
                 } else if (dateString.includes('-')) {
                     // YYYY-MM-DD format
                     date = new Date(dateString);
@@ -1216,11 +1237,14 @@
             try {
                 let date;
                 
-                // Handle different date formats
+                // Handle DD/MM/YYYY format (Argentine)
                 if (dateString.includes('/')) {
                     const parts = dateString.split('/');
-                    // Assuming MM/DD/YYYY format
-                    date = new Date(parts[2], parts[0] - 1, parts[1]);
+                    const day = parseInt(parts[0]);
+                    const month = parseInt(parts[1]);
+                    const year = parseInt(parts[2]);
+                    
+                    date = new Date(year, month - 1, day);
                 } else if (dateString.includes('-')) {
                     date = new Date(dateString);
                 } else {
