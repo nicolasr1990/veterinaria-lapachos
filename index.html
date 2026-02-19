@@ -614,25 +614,41 @@
         async function loadSheetData(sheetName, dataKey) {
             const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
             
+            console.log(`Loading ${sheetName}...`);
             const response = await fetch(url);
             const csvText = await response.text();
             
+            console.log(`Received data for ${sheetName}:`, csvText.substring(0, 200));
+            
             // Parse CSV
             const rows = parseCSV(csvText);
-            if (rows.length === 0) return;
+            console.log(`Parsed ${rows.length} rows for ${sheetName}`);
+            
+            if (rows.length === 0) {
+                console.warn(`No data found for ${sheetName}`);
+                return;
+            }
             
             // Convert to objects
-            const headers = rows[0];
-            const data = rows.slice(1).map(row => {
-                const obj = {};
-                headers.forEach((header, index) => {
-                    obj[header.toLowerCase().replace(/ /g, '')] = row[index] || '';
+            const headers = rows[0].map(h => String(h).trim());
+            console.log(`Headers for ${sheetName}:`, headers);
+            
+            const data = rows.slice(1)
+                .filter(row => row.some(cell => cell && String(cell).trim())) // Skip empty rows
+                .map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index] ? String(row[index]).trim() : '';
+                    });
+                    return obj;
                 });
-                return obj;
-            });
+            
+            console.log(`Processed ${data.length} data rows for ${sheetName}`);
+            console.log(`Sample data:`, data[0]);
             
             // Process data based on sheet type
             appData[dataKey] = processSheetData(dataKey, data);
+            console.log(`Final data for ${dataKey}:`, appData[dataKey].length, 'items');
         }
 
         // Simple CSV parser
@@ -677,56 +693,121 @@
             return rows;
         }
 
+        // Clean and normalize field name
+        function cleanFieldName(str) {
+            return str.toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Remove accents
+                .replace(/[^a-z0-9]/g, '') // Remove special chars
+                .trim();
+        }
+
+        // Clean value (remove quotes, extra spaces)
+        function cleanValue(str) {
+            if (typeof str !== 'string') return str;
+            return str.replace(/^["']|["']$/g, '').trim();
+        }
+
+        // Parse number from string
+        function parseNumber(str) {
+            if (!str) return 0;
+            const cleaned = String(str).replace(/[^0-9.-]/g, '');
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        }
+
         // Process and clean data
         function processSheetData(type, data) {
+            console.log(`Processing ${type}:`, data.length, 'rows');
+            
             switch(type) {
                 case 'totales':
-                    return data.map(row => ({
-                        mes: row.mes || '',
-                        año: parseInt(row.año) || 2026,
-                        ingresos: parseFloat(row.ingresos) || 0,
-                        gastos: parseFloat(row.gastos) || 0,
-                        retiros: parseFloat(row.retiros) || 0
-                    })).filter(row => row.mes);
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            mes: cleanRow.mes || '',
+                            año: parseInt(cleanRow.ano) || 2026,
+                            ingresos: parseNumber(cleanRow.ingresos),
+                            gastos: parseNumber(cleanRow.gastos),
+                            retiros: parseNumber(cleanRow.retiros)
+                        };
+                    }).filter(row => row.mes);
                 
                 case 'gastos':
-                    return data.map(row => ({
-                        fecha: row.fecha || '',
-                        categoria: row.categoría || row.categoria || '',
-                        subcategoria: row.subcategoría || row.subcategoria || '',
-                        proveedor: row.proveedor || '',
-                        montoTotal: parseFloat(row.montototal) || 0,
-                        montoPagado: parseFloat(row.montopagado) || 0,
-                        estado: row.estado || '',
-                        observaciones: row.observaciones || '',
-                        medioPago: row.mediodepago || ''
-                    })).filter(row => row.fecha);
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            fecha: cleanRow.fecha || '',
+                            categoria: cleanRow.categoria || '',
+                            subcategoria: cleanRow.subcategoria || '',
+                            proveedor: cleanRow.proveedor || '',
+                            montoTotal: parseNumber(cleanRow.montototal),
+                            montoPagado: parseNumber(cleanRow.montopagado),
+                            estado: cleanRow.estado || '',
+                            observaciones: cleanRow.observaciones || '',
+                            medioPago: cleanRow.mediodepago || ''
+                        };
+                    }).filter(row => row.fecha);
                 
                 case 'ingresos':
-                    return data.map(row => ({
-                        fecha: row.fecha || '',
-                        concepto: row.concepto || '',
-                        tipo: row.tipo || '',
-                        monto: parseFloat(row.monto) || 0,
-                        medioCobro: row.mediodecobro || '',
-                        observaciones: row.observaciones || ''
-                    })).filter(row => row.fecha);
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            fecha: cleanRow.fecha || '',
+                            concepto: cleanRow.concepto || '',
+                            tipo: cleanRow.tipo || '',
+                            monto: parseNumber(cleanRow.monto),
+                            medioCobro: cleanRow.mediodecobro || '',
+                            observaciones: cleanRow.observaciones || ''
+                        };
+                    }).filter(row => row.fecha);
                 
                 case 'proveedores':
-                    return data.map(row => ({
-                        nombre: row.nombreproveedor || row.proveedor || '',
-                        totalAcumulado: parseFloat(row.totalacumulado) || 0,
-                        pagado: parseFloat(row.pagado) || 0,
-                        pendiente: parseFloat(row.pendiente) || 0,
-                        ultimaFactura: row.últimafactura || row.ultimafactura || ''
-                    })).filter(row => row.nombre);
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            nombre: cleanRow.nombredelproveedor || cleanRow.proveedor || '',
+                            totalAcumulado: parseNumber(cleanRow.totalacumulado),
+                            pagado: parseNumber(cleanRow.pagado),
+                            pendiente: parseNumber(cleanRow.pendiente),
+                            ultimaFactura: cleanRow.ultimafactura || ''
+                        };
+                    }).filter(row => row.nombre);
                 
                 case 'retiros':
-                    return data.map(row => ({
-                        fecha: row.fecha || '',
-                        montoTotal: parseFloat(row.montototal) || 0,
-                        observaciones: row.observaciones || ''
-                    })).filter(row => row.fecha);
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            fecha: cleanRow.fecha || '',
+                            montoTotal: parseNumber(cleanRow.montototal),
+                            observaciones: cleanRow.observaciones || ''
+                        };
+                    }).filter(row => row.fecha);
                 
                 default:
                     return data;
