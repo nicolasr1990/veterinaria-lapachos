@@ -396,8 +396,8 @@
 
         /* Amount formatting */
         .amount {
-            font-weight: 600;
-            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            font-family: inherit; /* Use same font as other columns */
         }
 
         .amount.positive {
@@ -416,6 +416,139 @@
             text-transform: uppercase;
             font-size: 0.875rem;
             letter-spacing: 0.5px;
+        }
+
+        /* Modal for details */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .detail-row {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .detail-value.highlight {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Clickable rows */
+        .data-table tbody tr {
+            cursor: pointer;
+        }
+
+        .data-table tbody tr:active {
+            background: rgba(139, 21, 56, 0.15);
+        }
+
+        /* Fix background issue for tables */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 0; /* Remove padding to let table fill */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            overflow: hidden; /* Prevent background cutoff */
+        }
+
+        .data-table-wrapper {
+            overflow-x: auto;
+            background: var(--card-bg);
         }
     </style>
 </head>
@@ -532,6 +665,19 @@
                         <p>Cargando retiros...</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for details -->
+    <div id="detail-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Detalles</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content will be inserted here -->
             </div>
         </div>
     </div>
@@ -980,31 +1126,84 @@
                 // Group by month
                 const grouped = groupByMonth(filtered, 'fecha');
                 
-                let html = '<table class="data-table"><thead><tr><th>Fecha</th><th>Categoría</th><th>Proveedor/Detalle</th><th>Monto</th><th>Estado</th></tr></thead><tbody>';
+                let html = '<div class="data-table-wrapper"><table class="data-table"><thead><tr><th>Fecha</th><th>Proveedor/Detalle</th><th>Monto</th></tr></thead><tbody>';
                 
                 Object.entries(grouped).forEach(([month, items]) => {
-                    html += `<tr class="group-header"><td colspan="5">${month}</td></tr>`;
-                    items.forEach(item => {
-                        const badge = item.estado === 'Pagado total' ? 'badge-success' : 
-                                     item.estado === 'A deber' ? 'badge-danger' : 'badge-warning';
+                    html += `<tr class="group-header"><td colspan="3">${month}</td></tr>`;
+                    items.forEach((item, index) => {
+                        const detalle = item.proveedor || item.subcategoria || 'N/A';
                         html += `
-                            <tr>
+                            <tr onclick="showGastoDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
                                 <td>${formatDate(item.fecha)}</td>
-                                <td>${item.categoria}</td>
-                                <td>${item.proveedor || item.subcategoria}</td>
-                                <td class="amount">${formatCurrency(item.montoTotal)}</td>
-                                <td><span class="badge ${badge}">${item.estado}</span></td>
+                                <td>${detalle}</td>
+                                <td class="amount negative">${formatCurrency(item.montoTotal)}</td>
                             </tr>
                         `;
                     });
                 });
                 
-                html += '</tbody></table>';
+                html += '</tbody></table></div>';
                 container.innerHTML = html;
             };
 
             renderGastosTable();
             monthSelect.addEventListener('change', (e) => renderGastosTable(e.target.value));
+        }
+
+        // Show gasto detail modal
+        function showGastoDetail(item) {
+            const modal = document.getElementById('detail-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            
+            modalTitle.textContent = item.proveedor || item.subcategoria || 'Detalle del Gasto';
+            
+            const badge = item.estado === 'Pagado total' ? 'badge-success' : 
+                         item.estado === 'A deber' ? 'badge-danger' : 'badge-warning';
+            
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">Monto Total</div>
+                    <div class="detail-value highlight">${formatCurrency(item.montoTotal)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Fecha</div>
+                    <div class="detail-value">${formatDate(item.fecha)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Categoría</div>
+                    <div class="detail-value">${item.categoria}</div>
+                </div>
+                ${item.subcategoria ? `
+                <div class="detail-row">
+                    <div class="detail-label">Subcategoría</div>
+                    <div class="detail-value">${item.subcategoria}</div>
+                </div>` : ''}
+                ${item.proveedor ? `
+                <div class="detail-row">
+                    <div class="detail-label">Proveedor</div>
+                    <div class="detail-value">${item.proveedor}</div>
+                </div>` : ''}
+                <div class="detail-row">
+                    <div class="detail-label">Monto Pagado</div>
+                    <div class="detail-value">${formatCurrency(item.montoPagado)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Estado</div>
+                    <div class="detail-value"><span class="badge ${badge}">${item.estado}</span></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Medio de Pago</div>
+                    <div class="detail-value">${item.medioPago}</div>
+                </div>
+                ${item.observaciones ? `
+                <div class="detail-row">
+                    <div class="detail-label">Observaciones</div>
+                    <div class="detail-value">${item.observaciones}</div>
+                </div>` : ''}
+            `;
+            
+            modal.classList.add('active');
         }
 
         // Render Ingresos
@@ -1035,29 +1234,67 @@
                 // Group by month
                 const grouped = groupByMonth(filtered, 'fecha');
                 
-                let html = '<table class="data-table"><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th><th>Medio</th></tr></thead><tbody>';
+                let html = '<div class="data-table-wrapper"><table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th></tr></thead><tbody>';
                 
                 Object.entries(grouped).forEach(([month, items]) => {
-                    html += `<tr class="group-header"><td colspan="5">${month}</td></tr>`;
+                    html += `<tr class="group-header"><td colspan="3">${month}</td></tr>`;
                     items.forEach(item => {
                         html += `
-                            <tr>
+                            <tr onclick="showIngresoDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
                                 <td>${formatDate(item.fecha)}</td>
-                                <td>${item.concepto}</td>
                                 <td>${item.tipo}</td>
                                 <td class="amount positive">${formatCurrency(item.monto)}</td>
-                                <td>${item.medioCobro}</td>
                             </tr>
                         `;
                     });
                 });
                 
-                html += '</tbody></table>';
+                html += '</tbody></table></div>';
                 container.innerHTML = html;
             };
 
             renderIngresosTable();
             monthSelect.addEventListener('change', (e) => renderIngresosTable(e.target.value));
+        }
+
+        // Show ingreso detail modal
+        function showIngresoDetail(item) {
+            const modal = document.getElementById('detail-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            
+            modalTitle.textContent = item.tipo || 'Detalle del Ingreso';
+            
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">Monto</div>
+                    <div class="detail-value highlight" style="color: var(--success-color);">${formatCurrency(item.monto)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Fecha</div>
+                    <div class="detail-value">${formatDate(item.fecha)}</div>
+                </div>
+                ${item.concepto ? `
+                <div class="detail-row">
+                    <div class="detail-label">Concepto</div>
+                    <div class="detail-value">${item.concepto}</div>
+                </div>` : ''}
+                <div class="detail-row">
+                    <div class="detail-label">Tipo</div>
+                    <div class="detail-value">${item.tipo}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Medio de Cobro</div>
+                    <div class="detail-value">${item.medioCobro}</div>
+                </div>
+                ${item.observaciones ? `
+                <div class="detail-row">
+                    <div class="detail-label">Observaciones</div>
+                    <div class="detail-value">${item.observaciones}</div>
+                </div>` : ''}
+            `;
+            
+            modal.classList.add('active');
         }
 
         // Render Proveedores
@@ -1077,17 +1314,12 @@
             // Calculate totals
             const totalDebt = appData.proveedores.reduce((sum, p) => sum + p.pendiente, 0);
             const totalAccumulated = appData.proveedores.reduce((sum, p) => sum + p.totalAcumulado, 0);
-            const totalPaid = appData.proveedores.reduce((sum, p) => sum + p.pagado, 0);
 
             let html = `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1.5rem; background: var(--card-bg);">
                     <div style="padding: 1rem; background: rgba(139, 21, 56, 0.1); border-radius: 8px; border-left: 4px solid var(--primary-color);">
                         <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ACUMULADO</div>
                         <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(totalAccumulated)}</div>
-                    </div>
-                    <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 4px solid var(--success-color);">
-                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL PAGADO</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color);">${formatCurrency(totalPaid)}</div>
                     </div>
                     <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
                         <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ADEUDADO</div>
@@ -1095,12 +1327,12 @@
                     </div>
                 </div>
                 
+                <div class="data-table-wrapper">
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>Proveedor</th>
                             <th>Total Acumulado</th>
-                            <th>Pagado</th>
                             <th>Pendiente</th>
                             <th>Última Factura</th>
                         </tr>
@@ -1119,14 +1351,13 @@
                     <tr ${rowClass}>
                         <td style="font-weight: 600;">${item.nombre}</td>
                         <td class="amount">${formatCurrency(item.totalAcumulado)}</td>
-                        <td class="amount positive">${formatCurrency(item.pagado)}</td>
                         <td class="amount ${hasDebt ? 'negative' : ''}" style="${hasDebt ? 'font-weight: 700;' : ''}">${formatCurrency(item.pendiente)}</td>
                         <td>${formatDate(item.ultimaFactura)}</td>
                     </tr>
                 `;
             });
 
-            html += '</tbody></table>';
+            html += '</tbody></table></div>';
             container.innerHTML = html;
         }
 
@@ -1158,7 +1389,7 @@
                 // Group by month
                 const grouped = groupByMonth(filtered, 'fecha');
                 
-                let html = '<table class="data-table"><thead><tr><th>Fecha</th><th>Monto</th><th>Observaciones</th></tr></thead><tbody>';
+                let html = '<div class="data-table-wrapper"><table class="data-table"><thead><tr><th>Fecha</th><th>Monto</th><th>Observaciones</th></tr></thead><tbody>';
                 
                 Object.entries(grouped).forEach(([month, items]) => {
                     html += `<tr class="group-header"><td colspan="3">${month}</td></tr>`;
@@ -1173,13 +1404,26 @@
                     });
                 });
                 
-                html += '</tbody></table>';
+                html += '</tbody></table></div>';
                 container.innerHTML = html;
             };
 
             renderRetirosTable();
             monthSelect.addEventListener('change', (e) => renderRetirosTable(e.target.value));
         }
+
+        // Close modal function
+        function closeModal() {
+            document.getElementById('detail-modal').classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('detail-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
 
         // Utility functions
         function formatCurrency(amount) {
