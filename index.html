@@ -622,25 +622,6 @@
             padding: 1.5rem;
         }
 
-        /* Charts container */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .chart-card {
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .chart-card canvas {
-            max-height: 300px;
-        }
-
         /* Stat cards clickable */
         .stat-card.clickable {
             cursor: pointer;
@@ -1252,14 +1233,17 @@
             Object.entries(grouped).forEach(([month, items]) => {
                 const totalMes = items.reduce((sum, item) => sum + item.montoTotal, 0);
         
-                // Calcular datos para gráfico de categorías
+                // Calcular totales por categoría (SIN Retiro Personal)
                 const porCategoria = {};
                 items.forEach(item => {
                     const cat = item.categoria;
-                    porCategoria[cat] = (porCategoria[cat] || 0) + item.montoTotal;
+                    if (cat !== 'Retiro Personal') {  // Excluir retiros
+                        porCategoria[cat] = (porCategoria[cat] || 0) + item.montoTotal;
+                    }
                 });
         
-                const accordionId = `gastos-${month.replace(/\s/g, '-')}`;
+                // Calcular total sin retiros
+                const totalSinRetiros = Object.values(porCategoria).reduce((sum, val) => sum + val, 0);
         
                 html += `
                     <div class="accordion-item" data-mes="${month.split(' ')[0]}">
@@ -1298,10 +1282,31 @@
                                     </table>
                                 </div>
                         
-                                <div class="charts-grid">
-                                    <div class="chart-card">
-                                        <canvas id="chart-gastos-${accordionId}" width="300" height="250"></canvas>
-                                    </div>
+                                <!-- Tabla Resumen por Categoría -->
+                                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
+                                    <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">📊 Resumen por Categoría</h4>
+                                    <table class="data-table" style="background: white;">
+                                        <thead>
+                                            <tr>
+                                                <th style="text-align: left;">Categoría</th>
+                                                <th style="text-align: right;">Monto Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${Object.entries(porCategoria).map(([cat, monto]) => `
+                                                <tr>
+                                                    <td style="font-weight: 500;">${cat}</td>
+                                                    <td class="amount" style="text-align: right;">${formatCurrency(monto)}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style="background: rgba(139, 21, 56, 0.1); font-weight: 700;">
+                                                <td style="padding: 0.75rem;">TOTAL</td>
+                                                <td class="amount negative" style="text-align: right; padding: 0.75rem;">${formatCurrency(totalSinRetiros)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -1310,27 +1315,6 @@
             });
     
             container.innerHTML = html;
-    
-            // Crear gráficos
-            Object.entries(grouped).forEach(([month, items]) => {
-                const accordionId = `gastos-${month.replace(/\s/g, '-')}`;
-        
-                // Datos por categoría
-                const porCategoria = {};
-                items.forEach(item => {
-                    const cat = item.categoria;
-                    porCategoria[cat] = (porCategoria[cat] || 0) + item.montoTotal;
-                });
-        
-                const datosGrafico = Object.entries(porCategoria).map(([label, value]) => ({
-                    label,
-                    value
-                }));
-        
-                setTimeout(() => {
-                    crearGraficoTorta(`chart-gastos-${accordionId}`, datosGrafico, `Gastos por Categoría - ${month}`);
-                }, 100);
-            });
         }
 
         // Show gasto detail modal
@@ -1410,7 +1394,20 @@
     
             Object.entries(grouped).forEach(([month, items]) => {
                 const totalMes = items.reduce((sum, item) => sum + item.monto, 0);
-                const accordionId = `ingresos-${month.replace(/\s/g, '-')}`;
+        
+                // Calcular totales por tipo
+                const porTipo = {};
+                items.forEach(item => {
+                    const tipo = item.tipo;
+                    porTipo[tipo] = (porTipo[tipo] || 0) + item.monto;
+                });
+        
+                // Calcular totales por medio de cobro
+                const porMedio = {};
+                items.forEach(item => {
+                    const medio = item.medioCobro;
+                    porMedio[medio] = (porMedio[medio] || 0) + item.monto;
+                });
         
                 html += `
                     <div class="accordion-item" data-mes="${month.split(' ')[0]}">
@@ -1449,13 +1446,63 @@
                                     </table>
                                 </div>
                         
-                                <div class="charts-grid">
-                                    <div class="chart-card">
-                                        <canvas id="chart-tipo-${accordionId}" width="300" height="250"></canvas>
+                                <!-- Tablas Resumen -->
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                                    
+                                    <!-- Tabla Por Tipo -->
+                                    <div style="padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
+                                        <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">📊 Por Tipo</h4>
+                                        <table class="data-table" style="background: white;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align: left;">Tipo</th>
+                                                    <th style="text-align: right;">Monto Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${Object.entries(porTipo).map(([tipo, monto]) => `
+                                                    <tr>
+                                                        <td style="font-weight: 500;">${tipo}</td>
+                                                        <td class="amount positive" style="text-align: right;">${formatCurrency(monto)}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style="background: rgba(16, 185, 129, 0.1); font-weight: 700;">
+                                                    <td style="padding: 0.75rem;">TOTAL</td>
+                                                    <td class="amount positive" style="text-align: right; padding: 0.75rem;">${formatCurrency(totalMes)}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
                                     </div>
-                                    <div class="chart-card">
-                                        <canvas id="chart-medio-${accordionId}" width="300" height="250"></canvas>
+
+                                    <!-- Tabla Por Medio de Cobro -->
+                                    <div style="padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
+                                        <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">💳 Por Medio de Cobro</h4>
+                                        <table class="data-table" style="background: white;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align: left;">Medio de Cobro</th>
+                                                    <th style="text-align: right;">Monto Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${Object.entries(porMedio).map(([medio, monto]) => `
+                                                    <tr>
+                                                        <td style="font-weight: 500;">${medio}</td>
+                                                        <td class="amount positive" style="text-align: right;">${formatCurrency(monto)}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style="background: rgba(16, 185, 129, 0.1); font-weight: 700;">
+                                                    <td style="padding: 0.75rem;">TOTAL</td>
+                                                    <td class="amount positive" style="text-align: right; padding: 0.75rem;">${formatCurrency(totalMes)}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -1464,40 +1511,6 @@
             });
     
             container.innerHTML = html;
-    
-            // Crear gráficos
-            Object.entries(grouped).forEach(([month, items]) => {
-                const accordionId = `ingresos-${month.replace(/\s/g, '-')}`;
-        
-                // Datos por tipo
-                const porTipo = {};
-                items.forEach(item => {
-                    const tipo = item.tipo;
-                    porTipo[tipo] = (porTipo[tipo] || 0) + item.monto;
-                });
-        
-                const datosTipo = Object.entries(porTipo).map(([label, value]) => ({
-                    label,
-                    value
-                }));
-        
-                // Datos por medio de cobro
-                const porMedio = {};
-                items.forEach(item => {
-                    const medio = item.medioCobro;
-                    porMedio[medio] = (porMedio[medio] || 0) + item.monto;
-                });
-        
-                const datosMedio = Object.entries(porMedio).map(([label, value]) => ({
-                    label,
-                    value
-                }));
-        
-                setTimeout(() => {
-                    crearGraficoTorta(`chart-tipo-${accordionId}`, datosTipo, `Por Tipo - ${month}`);
-                    crearGraficoTorta(`chart-medio-${accordionId}`, datosMedio, `Por Medio de Cobro - ${month}`);
-                }, 100);
-            });
         }
 
         // Show ingreso detail modal
@@ -1802,73 +1815,6 @@
             if (!wasOpen) {
                 item.classList.add('open');
             }
-        }
-
-        // Función para crear gráfico de torta (MODIFICACIÓN 5)
-        function crearGraficoTorta(canvasId, datos, titulo) {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-    
-            const ctx = canvas.getContext('2d');
-    
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: datos.map(d => d.label),
-                    datasets: [{
-                        data: datos.map(d => d.value),
-                        backgroundColor: [
-                            'rgba(139, 21, 56, 0.8)',
-                            'rgba(196, 163, 44, 0.8)',
-                            'rgba(16, 185, 129, 0.8)',
-                            'rgba(239, 68, 68, 0.8)',
-                            'rgba(245, 158, 11, 0.8)',
-                            'rgba(59, 130, 246, 0.8)',
-                            'rgba(168, 85, 247, 0.8)',
-                            'rgba(236, 72, 153, 0.8)'
-                        ],
-                        borderColor: '#ffffff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 15,
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: titulo,
-                            font: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            padding: {
-                                bottom: 15
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = formatCurrency(context.parsed);
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
         }
     </script>
 </body>
