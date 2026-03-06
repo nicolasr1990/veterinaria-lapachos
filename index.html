@@ -17,18 +17,20 @@
             --success-color: #10b981;
             --danger-color: #ef4444;
             --warning-color: #f59e0b;
-            --bg-color: #f8fafc;
+            --bg-color: #faf5f0;
             --card-bg: #ffffff;
             --text-primary: #1e293b;
             --text-secondary: #64748b;
-            --border-color: #e2e8f0;
+            --border-color: #e8ddd0;
+            --accent-light: #fff8f0;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: var(--bg-color);
+            background: linear-gradient(135deg, #faf5f0 0%, #f5ede3 100%);
             color: var(--text-primary);
             line-height: 1.6;
+            min-height: 100vh;
         }
 
         /* Header */
@@ -550,6 +552,116 @@
             overflow-x: auto;
             background: var(--card-bg);
         }
+
+        /* Acordeón */
+        .accordion-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .accordion-item:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .accordion-header {
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #6B0F2B 100%);
+            color: white;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-header:hover {
+            background: linear-gradient(135deg, #6B0F2B 0%, var(--primary-color) 100%);
+        }
+
+        .accordion-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .accordion-summary {
+            font-size: 0.9rem;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .accordion-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+            font-weight: bold;
+        }
+
+        .accordion-item.open .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .accordion-item.open .accordion-content {
+            max-height: 10000px;
+        }
+
+        .accordion-body {
+            padding: 1.5rem;
+        }
+
+        /* Charts container */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .chart-card canvas {
+            max-height: 300px;
+        }
+
+        /* Stat cards clickable */
+        .stat-card.clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card.clickable:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .stat-card.clickable:active {
+            transform: translateY(-2px);
+        }
+
+        .stat-card .click-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -601,38 +713,20 @@
 
         <!-- Gastos Tab -->
         <div id="gastos" class="tab-content">
-            <div class="month-selector">
-                <label for="gastos-month">Filtrar por mes:</label>
-                <select id="gastos-month">
-                    <option value="todos">Todos los meses</option>
-                </select>
-            </div>
-
-            <div class="card">
-                <div id="gastos-table-container">
-                    <div class="loading">
-                        <div class="loading-spinner"></div>
-                        <p>Cargando gastos...</p>
-                    </div>
+            <div id="gastos-accordion-container">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando gastos...</p>
                 </div>
             </div>
         </div>
 
         <!-- Ingresos Tab -->
         <div id="ingresos" class="tab-content">
-            <div class="month-selector">
-                <label for="ingresos-month">Filtrar por mes:</label>
-                <select id="ingresos-month">
-                    <option value="todos">Todos los meses</option>
-                </select>
-            </div>
-
-            <div class="card">
-                <div id="ingresos-table-container">
-                    <div class="loading">
-                        <div class="loading-spinner"></div>
-                        <p>Cargando ingresos...</p>
-                    </div>
+            <div id="ingresos-accordion-container">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando ingresos...</p>
                 </div>
             </div>
         </div>
@@ -651,19 +745,10 @@
 
         <!-- Retiros Tab -->
         <div id="retiros" class="tab-content">
-            <div class="month-selector">
-                <label for="retiros-month">Filtrar por mes:</label>
-                <select id="retiros-month">
-                    <option value="todos">Todos los meses</option>
-                </select>
-            </div>
-
-            <div class="card">
-                <div id="retiros-table-container">
-                    <div class="loading">
-                        <div class="loading-spinner"></div>
-                        <p>Cargando retiros...</p>
-                    </div>
+            <div id="retiros-accordion-container">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando retiros...</p>
                 </div>
             </div>
         </div>
@@ -998,6 +1083,32 @@
             renderRetiros();
         }
 
+        // Función para navegar a una sección con mes pre-seleccionado (MODIFICACIÓN 3)
+        function irASeccion(seccion, mes) {
+            // Cambiar a la pestaña
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+            const tab = document.querySelector(`[data-tab="${seccion}"]`);
+            const content = document.getElementById(seccion);
+    
+            if (tab && content) {
+                tab.classList.add('active');
+                content.classList.add('active');
+        
+                // Expandir el acordeón del mes seleccionado
+                setTimeout(() => {
+                    const acordeonItem = document.querySelector(`#${seccion}-accordion-container .accordion-item[data-mes="${mes}"]`);
+                    if (acordeonItem && !acordeonItem.classList.contains('open')) {
+                        acordeonItem.querySelector('.accordion-header').click();
+                    }
+                }, 100);
+        
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
         // Render Dashboard
         function renderDashboard() {
             const monthSelect = document.getElementById('dashboard-month');
@@ -1008,37 +1119,58 @@
                 `<option value="${index}">${item.mes} ${item.año}</option>`
             ).join('');
 
-            // Show first month by default
+            // Show CURRENT month by default (MODIFICACIÓN 2)
             if (appData.totales.length > 0) {
-                updateDashboardStats(0);
-            }
+                const hoy = new Date();
+                const mesActual = hoy.toLocaleString('es-AR', { month: 'long' });
+                const añoActual = hoy.getFullYear();
+        
+                // Buscar el mes actual en los datos
+                const indexMesActual = appData.totales.findIndex(t => 
+                    t.mes.toLowerCase() === mesActual.toLowerCase() && t.año === añoActual
+                );
+        
+                if (indexMesActual !== -1) {
+                    monthSelect.value = indexMesActual;
+                    updateDashboardStats(indexMesActual);
+                } else {
+                    // Si no encuentra el mes actual, mostrar el último mes disponible
+                    const ultimoIndex = appData.totales.length - 1;
+                    monthSelect.value = ultimoIndex;
+                    updateDashboardStats(ultimoIndex);
+                }
+             }
 
-            // Month change listener
-            monthSelect.addEventListener('change', (e) => {
-                updateDashboardStats(parseInt(e.target.value));
-            });
+             // Month change listener
+             monthSelect.addEventListener('change', (e) => {
+                 updateDashboardStats(parseInt(e.target.value));
+             });
         }
 
         function updateDashboardStats(index) {
             const data = appData.totales[index];
             const neto = data.ingresos - data.gastos - data.retiros;
-            
+            const mesSeleccionado = data.mes;
+    
             const statsContainer = document.getElementById('dashboard-stats');
             statsContainer.innerHTML = `
-                <div class="stat-card success">
-                    <div class="stat-label">Ingresos</div>
+                <div class="stat-card success clickable" onclick="irASeccion('ingresos', '${mesSeleccionado}')">
+                    <div class="stat-label">💰 Ingresos</div>
                     <div class="stat-value success">${formatCurrency(data.ingresos)}</div>
+                    <div class="click-hint">Click para ver detalle →</div>
                 </div>
-                <div class="stat-card danger">
-                    <div class="stat-label">Gastos</div>
+                <div class="stat-card danger clickable" onclick="irASeccion('gastos', '${mesSeleccionado}')">
+                    <div class="stat-label">💸 Gastos</div>
                     <div class="stat-value danger">${formatCurrency(data.gastos)}</div>
+                    <div class="click-hint">Click para ver detalle →</div>
                 </div>
-                <div class="stat-card warning">
-                    <div class="stat-label">Retiros</div>
+                <div class="stat-card warning clickable" onclick="irASeccion('retiros', '${mesSeleccionado}')">
+                    <div class="stat-label">👤 Retiros</div>
                     <div class="stat-value">${formatCurrency(data.retiros)}</div>
+                    <div class="click-hint">Click para ver detalle →</div>
                 </div>
-                <div class="stat-card ${neto >= 0 ? 'success' : 'danger'}">
-                    <div class="stat-label">Neto</div>
+                    <div class="stat-card ${neto >= 0 ? 'success' : 'danger'}">
+                    <div class="stat-label">💵 Neto</div>
                     <div class="stat-value ${neto >= 0 ? 'success' : 'danger'}">${formatCurrency(neto)}</div>
                 </div>
             `;
@@ -1098,56 +1230,107 @@
             });
         }
 
-        // Render Gastos
+        // Render Gastos con acordeón (MODIFICACIÓN 4)
         function renderGastos() {
-            const monthSelect = document.getElementById('gastos-month');
-            const container = document.getElementById('gastos-table-container');
+            const container = document.getElementById('gastos-accordion-container');
 
-            // Populate month selector
-            const months = [...new Set(appData.gastos.map(g => getMonthFromDate(g.fecha)))];
-            monthSelect.innerHTML = '<option value="todos">Todos los meses</option>' + 
-                months.map(m => `<option value="${m}">${m}</option>`).join('');
+            if (appData.gastos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay gastos registrados</p>
+                    </div>
+                `;
+                return;
+            }
 
-            // Filter and render
-            const renderGastosTable = (filter = 'todos') => {
-                const filtered = filter === 'todos' ? appData.gastos : 
-                    appData.gastos.filter(g => getMonthFromDate(g.fecha) === filter);
-
-                if (filtered.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
-                            <p>No hay gastos registrados</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                // Group by month
-                const grouped = groupByMonth(filtered, 'fecha');
-                
-                let html = '<div class="data-table-wrapper"><table class="data-table"><thead><tr><th>Fecha</th><th>Proveedor/Detalle</th><th>Monto</th></tr></thead><tbody>';
-                
-                Object.entries(grouped).forEach(([month, items]) => {
-                    html += `<tr class="group-header"><td colspan="3">${month}</td></tr>`;
-                    items.forEach((item, index) => {
-                        const detalle = item.proveedor || item.subcategoria || 'N/A';
-                        html += `
-                            <tr onclick="showGastoDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
-                                <td>${formatDate(item.fecha)}</td>
-                                <td>${detalle}</td>
-                                <td class="amount negative">${formatCurrency(item.montoTotal)}</td>
-                            </tr>
-                        `;
-                    });
+            // Agrupar por mes
+            const grouped = groupByMonth(appData.gastos, 'fecha');
+    
+            let html = '';
+    
+            Object.entries(grouped).forEach(([month, items]) => {
+                const totalMes = items.reduce((sum, item) => sum + item.montoTotal, 0);
+        
+                // Calcular datos para gráfico de categorías
+                const porCategoria = {};
+                items.forEach(item => {
+                    const cat = item.categoria;
+                    porCategoria[cat] = (porCategoria[cat] || 0) + item.montoTotal;
                 });
-                
-                html += '</tbody></table></div>';
-                container.innerHTML = html;
-            };
-
-            renderGastosTable();
-            monthSelect.addEventListener('change', (e) => renderGastosTable(e.target.value));
+        
+                const accordionId = `gastos-${month.replace(/\s/g, '-')}`;
+        
+                html += `
+                    <div class="accordion-item" data-mes="${month.split(' ')[0]}">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span>📅</span>
+                                <span>${month}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div class="accordion-summary">
+                                    ${items.length} ${items.length === 1 ? 'gasto' : 'gastos'} · Total: ${formatCurrency(totalMes)}
+                                </div>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="accordion-body">
+                                <div class="data-table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Proveedor/Detalle</th>
+                                                <th>Monto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${items.map(item => `
+                                                <tr onclick="showGastoDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                                                    <td>${formatDate(item.fecha)}</td>
+                                                    <td>${item.proveedor || item.subcategoria || 'N/A'}</td>
+                                                    <td class="amount negative">${formatCurrency(item.montoTotal)}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                        
+                                <div class="charts-grid">
+                                    <div class="chart-card">
+                                        <canvas id="chart-gastos-${accordionId}" width="300" height="250"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+    
+            container.innerHTML = html;
+    
+            // Crear gráficos
+            Object.entries(grouped).forEach(([month, items]) => {
+                const accordionId = `gastos-${month.replace(/\s/g, '-')}`;
+        
+                // Datos por categoría
+                const porCategoria = {};
+                items.forEach(item => {
+                    const cat = item.categoria;
+                    porCategoria[cat] = (porCategoria[cat] || 0) + item.montoTotal;
+                });
+        
+                const datosGrafico = Object.entries(porCategoria).map(([label, value]) => ({
+                    label,
+                    value
+                }));
+        
+                setTimeout(() => {
+                    crearGraficoTorta(`chart-gastos-${accordionId}`, datosGrafico, `Gastos por Categoría - ${month}`);
+                }, 100);
+            });
         }
 
         // Show gasto detail modal
@@ -1206,55 +1389,115 @@
             modal.classList.add('active');
         }
 
-        // Render Ingresos
+        // Render Ingresos con acordeón (MODIFICACIÓN 4)
         function renderIngresos() {
-            const monthSelect = document.getElementById('ingresos-month');
-            const container = document.getElementById('ingresos-table-container');
+            const container = document.getElementById('ingresos-accordion-container');
 
-            // Populate month selector
-            const months = [...new Set(appData.ingresos.map(i => getMonthFromDate(i.fecha)))];
-            monthSelect.innerHTML = '<option value="todos">Todos los meses</option>' + 
-                months.map(m => `<option value="${m}">${m}</option>`).join('');
+            if (appData.ingresos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay ingresos registrados</p>
+                    </div>
+                `;
+                return;
+            }
 
-            // Filter and render
-            const renderIngresosTable = (filter = 'todos') => {
-                const filtered = filter === 'todos' ? appData.ingresos : 
-                    appData.ingresos.filter(i => getMonthFromDate(i.fecha) === filter);
-
-                if (filtered.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
-                            <p>No hay ingresos registrados</p>
+            // Agrupar por mes
+            const grouped = groupByMonth(appData.ingresos, 'fecha');
+    
+            let html = '';
+    
+            Object.entries(grouped).forEach(([month, items]) => {
+                const totalMes = items.reduce((sum, item) => sum + item.monto, 0);
+                const accordionId = `ingresos-${month.replace(/\s/g, '-')}`;
+        
+                html += `
+                    <div class="accordion-item" data-mes="${month.split(' ')[0]}">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span>📅</span>
+                                <span>${month}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div class="accordion-summary">
+                                    ${items.length} ${items.length === 1 ? 'ingreso' : 'ingresos'} · Total: ${formatCurrency(totalMes)}
+                                </div>
+                                <span class="accordion-icon">▼</span>
+                            </div>
                         </div>
-                    `;
-                    return;
-                }
-
-                // Group by month
-                const grouped = groupByMonth(filtered, 'fecha');
-                
-                let html = '<div class="data-table-wrapper"><table class="data-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th></tr></thead><tbody>';
-                
-                Object.entries(grouped).forEach(([month, items]) => {
-                    html += `<tr class="group-header"><td colspan="3">${month}</td></tr>`;
-                    items.forEach(item => {
-                        html += `
-                            <tr onclick="showIngresoDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
-                                <td>${formatDate(item.fecha)}</td>
-                                <td>${item.tipo}</td>
-                                <td class="amount positive">${formatCurrency(item.monto)}</td>
-                            </tr>
-                        `;
-                    });
+                        <div class="accordion-content">
+                            <div class="accordion-body">
+                                <div class="data-table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Tipo</th>
+                                                <th>Monto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${items.map(item => `
+                                                <tr onclick="showIngresoDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                                                    <td>${formatDate(item.fecha)}</td>
+                                                    <td>${item.tipo}</td>
+                                                    <td class="amount positive">${formatCurrency(item.monto)}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                        
+                                <div class="charts-grid">
+                                    <div class="chart-card">
+                                        <canvas id="chart-tipo-${accordionId}" width="300" height="250"></canvas>
+                                    </div>
+                                    <div class="chart-card">
+                                        <canvas id="chart-medio-${accordionId}" width="300" height="250"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+    
+            container.innerHTML = html;
+    
+            // Crear gráficos
+            Object.entries(grouped).forEach(([month, items]) => {
+                const accordionId = `ingresos-${month.replace(/\s/g, '-')}`;
+        
+                // Datos por tipo
+                const porTipo = {};
+                items.forEach(item => {
+                    const tipo = item.tipo;
+                    porTipo[tipo] = (porTipo[tipo] || 0) + item.monto;
                 });
-                
-                html += '</tbody></table></div>';
-                container.innerHTML = html;
-            };
-
-            renderIngresosTable();
-            monthSelect.addEventListener('change', (e) => renderIngresosTable(e.target.value));
+        
+                const datosTipo = Object.entries(porTipo).map(([label, value]) => ({
+                    label,
+                    value
+                }));
+        
+                // Datos por medio de cobro
+                const porMedio = {};
+                items.forEach(item => {
+                    const medio = item.medioCobro;
+                    porMedio[medio] = (porMedio[medio] || 0) + item.monto;
+                });
+        
+                const datosMedio = Object.entries(porMedio).map(([label, value]) => ({
+                    label,
+                    value
+                }));
+        
+                setTimeout(() => {
+                    crearGraficoTorta(`chart-tipo-${accordionId}`, datosTipo, `Por Tipo - ${month}`);
+                    crearGraficoTorta(`chart-medio-${accordionId}`, datosMedio, `Por Medio de Cobro - ${month}`);
+                }, 100);
+            });
         }
 
         // Show ingreso detail modal
@@ -1361,55 +1604,71 @@
             container.innerHTML = html;
         }
 
-        // Render Retiros
+        // Render Retiros con acordeón (MODIFICACIÓN 4)
         function renderRetiros() {
-            const monthSelect = document.getElementById('retiros-month');
-            const container = document.getElementById('retiros-table-container');
+            const container = document.getElementById('retiros-accordion-container');
 
-            // Populate month selector
-            const months = [...new Set(appData.retiros.map(r => getMonthFromDate(r.fecha)))];
-            monthSelect.innerHTML = '<option value="todos">Todos los meses</option>' + 
-                months.map(m => `<option value="${m}">${m}</option>`).join('');
+            if (appData.retiros.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay retiros registrados</p>
+                    </div>
+                `;
+                return;
+            }
 
-            // Filter and render
-            const renderRetirosTable = (filter = 'todos') => {
-                const filtered = filter === 'todos' ? appData.retiros : 
-                    appData.retiros.filter(r => getMonthFromDate(r.fecha) === filter);
-
-                if (filtered.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
-                            <p>No hay retiros registrados</p>
+            // Agrupar por mes
+            const grouped = groupByMonth(appData.retiros, 'fecha');
+    
+            let html = '';
+    
+            Object.entries(grouped).forEach(([month, items]) => {
+                const totalMes = items.reduce((sum, item) => sum + item.montoTotal, 0);
+        
+                html += `
+                    <div class="accordion-item" data-mes="${month.split(' ')[0]}">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span>📅</span>
+                                <span>${month}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div class="accordion-summary">
+                                    ${items.length} ${items.length === 1 ? 'retiro' : 'retiros'} · Total: ${formatCurrency(totalMes)}
+                                </div>
+                                <span class="accordion-icon">▼</span>
+                            </div>
                         </div>
-                    `;
-                    return;
-                }
-
-                // Group by month
-                const grouped = groupByMonth(filtered, 'fecha');
-                
-                let html = '<div class="data-table-wrapper"><table class="data-table"><thead><tr><th>Fecha</th><th>Monto</th><th>Observaciones</th></tr></thead><tbody>';
-                
-                Object.entries(grouped).forEach(([month, items]) => {
-                    html += `<tr class="group-header"><td colspan="3">${month}</td></tr>`;
-                    items.forEach(item => {
-                        html += `
-                            <tr>
-                                <td>${formatDate(item.fecha)}</td>
-                                <td class="amount">${formatCurrency(item.montoTotal)}</td>
-                                <td>${item.observaciones || '-'}</td>
-                            </tr>
-                        `;
-                    });
-                });
-                
-                html += '</tbody></table></div>';
-                container.innerHTML = html;
-            };
-
-            renderRetirosTable();
-            monthSelect.addEventListener('change', (e) => renderRetirosTable(e.target.value));
+                        <div class="accordion-content">
+                            <div class="accordion-body">
+                                <div class="data-table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Monto</th>
+                                                <th>Observaciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${items.map(item => `
+                                                <tr>
+                                                    <td>${formatDate(item.fecha)}</td>
+                                                    <td class="amount">${formatCurrency(item.montoTotal)}</td>
+                                                    <td>${item.observaciones || '-'}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+    
+            container.innerHTML = html;
         }
 
         // Close modal function
@@ -1526,6 +1785,89 @@
                         <p>Error al cargar los datos. Por favor, intenta nuevamente más tarde.</p>
                     </div>
                 `;
+            });
+        }
+
+        // Función para toggle de acordeón (MODIFICACIÓN 4)
+        function toggleAccordion(header) {
+            const item = header.parentElement;
+            const wasOpen = item.classList.contains('open');
+    
+            // Cerrar todos los acordeones
+            document.querySelectorAll('.accordion-item').forEach(i => {
+                i.classList.remove('open');
+            });
+    
+            // Abrir el clickeado si estaba cerrado
+            if (!wasOpen) {
+                item.classList.add('open');
+            }
+        }
+
+        // Función para crear gráfico de torta (MODIFICACIÓN 5)
+        function crearGraficoTorta(canvasId, datos, titulo) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+    
+            const ctx = canvas.getContext('2d');
+    
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: datos.map(d => d.label),
+                    datasets: [{
+                        data: datos.map(d => d.value),
+                        backgroundColor: [
+                            'rgba(139, 21, 56, 0.8)',
+                            'rgba(196, 163, 44, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(168, 85, 247, 0.8)',
+                            'rgba(236, 72, 153, 0.8)'
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: titulo,
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                bottom: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = formatCurrency(context.parsed);
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
             });
         }
     </script>
