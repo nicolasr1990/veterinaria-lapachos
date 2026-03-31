@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veterinaria Los Lapachos - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #8B1538;
+            --secondary-color: #C4A32C;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-color: #faf5f0;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e8ddd0;
+            --accent-light: #fff8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #faf5f0 0%, #f5ede3 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #6B0F2B 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: auto;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            padding: 5px;
+        }
+
+        .header-title {
+            flex: 1;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            background: white;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 82px;
+            z-index: 99;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tabs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0.5rem;
+            padding: 0 1rem;
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            position: relative;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .nav-tab:hover {
+            color: var(--primary-color);
+            background: rgba(139, 21, 56, 0.05);
+        }
+
+        .nav-tab.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary-color);
+        }
+
+        /* Content */
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .stat-card.success {
+            border-left-color: var(--success-color);
+        }
+
+        .stat-card.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .stat-card.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-value.success {
+            color: var(--success-color);
+        }
+
+        .stat-value.danger {
+            color: var(--danger-color);
+        }
+
+        /* Month Selector */
+        .month-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .month-selector label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .month-selector select {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            background: white;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .month-selector select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        .data-table thead {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(139, 21, 56, 0.05);
+        }
+
+        .data-table td {
+            padding: 1rem;
+            color: var(--text-primary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-title h1 {
+                font-size: 1.25rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .data-table {
+                font-size: 0.875rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .nav-tab {
+                padding: 1rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Amount formatting */
+        .amount {
+            font-weight: 500;
+            font-family: inherit; /* Use same font as other columns */
+        }
+
+        .amount.positive {
+            color: var(--success-color);
+        }
+
+        .amount.negative {
+            color: var(--danger-color);
+        }
+
+        /* Group headers in tables */
+        .group-header {
+            background: var(--bg-color);
+            font-weight: 600;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Modal for details */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .detail-row {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .detail-value.highlight {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Clickable rows */
+        .data-table tbody tr {
+            cursor: pointer;
+        }
+
+        .data-table tbody tr:active {
+            background: rgba(139, 21, 56, 0.15);
+        }
+
+        /* Fix background issue for tables */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 0; /* Remove padding to let table fill */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            overflow: hidden; /* Prevent background cutoff */
+        }
+
+        .data-table-wrapper {
+            overflow-x: auto;
+            background: var(--card-bg);
+        }
+
+        /* Acordeón */
+        .accordion-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .accordion-item:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .accordion-header {
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #6B0F2B 100%);
+            color: white;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-header:hover {
+            background: linear-gradient(135deg, #6B0F2B 0%, var(--primary-color) 100%);
+        }
+
+        .accordion-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .accordion-summary {
+            font-size: 0.9rem;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .accordion-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+            font-weight: bold;
+        }
+
+        .accordion-item.open .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .accordion-item.open .accordion-content {
+            max-height: 10000px;
+        }
+
+        .accordion-body {
+            padding: 1.5rem;
+        }
+
+        /* Stat cards clickable */
+        .stat-card.clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card.clickable:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .stat-card.clickable:active {
+            transform: translateY(-2px);
+        }
+
+        .stat-card .click-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <img src="logo.png" alt="Logo" class="logo">
+            <div class="header-title">
+                <h1>Veterinaria Los Lapachos</h1>
+                <p>Sistema de Gestión Financiera</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-tabs">
+        <div class="nav-tabs-container">
+            <button class="nav-tab active" data-tab="dashboard">📊 Dashboard</button>
+            <button class="nav-tab" data-tab="gastos">💸 Gastos</button>
+            <button class="nav-tab" data-tab="ingresos">💰 Ingresos</button>
+            <button class="nav-tab" data-tab="proveedores">🏪 Proveedores</button>
+            <button class="nav-tab" data-tab="retiros">👤 Retiros</button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="month-selector">
+                <label for="dashboard-month">Seleccionar mes:</label>
+                <select id="dashboard-month">
+                    <option value="">Cargando...</option>
+                </select>
+            </div>
+
+            <div id="dashboard-stats" class="stats-grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando datos...</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="card-title">Resumen Visual</h3>
+                <canvas id="dashboard-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gastos Tab -->
+        <div id="gastos" class="tab-content">
+            <div id="gastos-accordion-container">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando gastos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingresos Tab -->
+        <div id="ingresos" class="tab-content">
+            <div id="ingresos-accordion-container">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando ingresos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proveedores Tab -->
+        <div id="proveedores" class="tab-content">
+            <div class="card">
+                <div id="proveedores-table-container">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando proveedores...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Retiros Tab -->
+        <div id="retiros" class="tab-content">
+            <div id="retiros-accordion-container">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cargando retiros...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for details -->
+    <div id="detail-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Detalles</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script>
+        // Google Sheet configuration
+        const SHEET_ID = '1y91zkqTucSs55yb16Q8hTn6yxsv23rhl4Kg1XqdEfIg';
+        
+        // Sheet GIDs (obtener de la URL de cada hoja)
+        const SHEET_GIDS = {
+            TOTALES: '0',  // Actualizar con el GID real
+            GASTOS: '0',   // Actualizar con el GID real  
+            INGRESOS: '0', // Actualizar con el GID real
+            PROVEEDORES: '0', // Actualizar con el GID real
+            RETIROS: '0'   // Actualizar con el GID real
+        };
+
+        // Global data storage
+        let appData = {
+            totales: [],
+            gastos: [],
+            ingresos: [],
+            proveedores: [],
+            retiros: []
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNavigation();
+            loadAllData();
+        });
+
+        // Navigation
+        function initializeNavigation() {
+            const tabs = document.querySelectorAll('.nav-tab');
+            const contents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.getAttribute('data-tab');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        }
+
+        // Load data from Google Sheets
+        async function loadAllData() {
+            try {
+                // Cargar datos reales desde Google Sheets
+                await Promise.all([
+                    loadSheetData('TOTALES_MENSUALES', 'totales'),
+                    loadSheetData('GASTOS_SIN_RETIROS', 'gastos'),
+                    loadSheetData('INGRESOS', 'ingresos'),
+                    loadSheetData('PROVEEDORES', 'proveedores'),
+                    loadSheetData('SOLO_RETIROS', 'retiros')
+                ]);
+
+                renderDashboard();
+                renderGastos();
+                renderIngresos();
+                renderProveedores();
+                renderRetiros();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                // Si falla, usar datos mock
+                loadMockData();
+            }
+        }
+
+        // Load individual sheet using CSV export (no API key needed!)
+        async function loadSheetData(sheetName, dataKey) {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+            
+            console.log(`Loading ${sheetName}...`);
+            const response = await fetch(url);
+            const csvText = await response.text();
+            
+            console.log(`Received data for ${sheetName}:`, csvText.substring(0, 200));
+            
+            // Parse CSV
+            const rows = parseCSV(csvText);
+            console.log(`Parsed ${rows.length} rows for ${sheetName}`);
+            
+            if (rows.length === 0) {
+                console.warn(`No data found for ${sheetName}`);
+                return;
+            }
+            
+            // Convert to objects
+            const headers = rows[0].map(h => String(h).trim());
+            console.log(`Headers for ${sheetName}:`, headers);
+            
+            const data = rows.slice(1)
+                .filter(row => row.some(cell => cell && String(cell).trim())) // Skip empty rows
+                .map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index] ? String(row[index]).trim() : '';
+                    });
+                    return obj;
+                });
+            
+            console.log(`Processed ${data.length} data rows for ${sheetName}`);
+            console.log(`Sample data:`, data[0]);
+            
+            // Process data based on sheet type
+            appData[dataKey] = processSheetData(dataKey, data);
+            console.log(`Final data for ${dataKey}:`, appData[dataKey].length, 'items');
+        }
+
+        // Simple CSV parser
+        function parseCSV(text) {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+                
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentField += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentField);
+                    currentField = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (currentField || currentRow.length > 0) {
+                        currentRow.push(currentField);
+                        rows.push(currentRow);
+                        currentRow = [];
+                        currentField = '';
+                    }
+                    if (char === '\r' && nextChar === '\n') i++;
+                } else {
+                    currentField += char;
+                }
+            }
+            
+            if (currentField || currentRow.length > 0) {
+                currentRow.push(currentField);
+                rows.push(currentRow);
+            }
+            
+            return rows;
+        }
+
+        // Clean and normalize field name
+        function cleanFieldName(str) {
+            return str.toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Remove accents
+                .replace(/[^a-z0-9]/g, '') // Remove special chars
+                .trim();
+        }
+
+        // Clean value (remove quotes, extra spaces)
+        function cleanValue(str) {
+            if (typeof str !== 'string') return str;
+            return str.replace(/^["']|["']$/g, '').trim();
+        }
+
+        // Parse number from string (handles $, commas, etc)
+        function parseNumber(str) {
+            if (!str) return 0;
+            // Remove $, spaces, and replace commas with nothing
+            const cleaned = String(str)
+                .replace(/\$/g, '')
+                .replace(/\s/g, '')
+                .replace(/,/g, '') // Remove thousands separator
+                .replace(/[^0-9.-]/g, '');
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        }
+
+        // Process and clean data
+        function processSheetData(type, data) {
+            console.log(`Processing ${type}:`, data.length, 'rows');
+            
+            switch(type) {
+                case 'totales':
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            mes: cleanRow.mes || '',
+                            año: parseInt(cleanRow.ano) || 2026,
+                            ingresos: parseNumber(cleanRow.ingresos),
+                            gastos: parseNumber(cleanRow.gastos),
+                            retiros: parseNumber(cleanRow.retiros)
+                        };
+                    }).filter(row => row.mes);
+                
+                case 'gastos':
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            fecha: cleanRow.fecha || '',
+                            categoria: cleanRow.categoria || '',
+                            subcategoria: cleanRow.subcategoria || '',
+                            proveedor: cleanRow.proveedor || '',
+                            montoTotal: parseNumber(cleanRow.montototal),
+                            montoPagado: parseNumber(cleanRow.montopagado),
+                            estado: cleanRow.estado || '',
+                            observaciones: cleanRow.observaciones || '',
+                            medioPago: cleanRow.mediodepago || ''
+                        };
+                    }).filter(row => row.fecha);
+                
+                case 'ingresos':
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            fecha: cleanRow.fecha || '',
+                            concepto: cleanRow.concepto || '',
+                            tipo: cleanRow.tipo || '',
+                            monto: parseNumber(cleanRow.monto),
+                            medioCobro: cleanRow.mediodecobro || '',
+                            observaciones: cleanRow.observaciones || ''
+                        };
+                    }).filter(row => row.fecha);
+                
+                case 'proveedores':
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            nombre: cleanRow.nombredelproveedor || cleanRow.proveedor || '',
+                            totalAcumulado: parseNumber(cleanRow.totalacumulado),
+                            pagado: parseNumber(cleanRow.pagado),
+                            pendiente: parseNumber(cleanRow.pendiente),
+                            ultimaFactura: cleanRow.ultimafactura || ''
+                        };
+                    }).filter(row => row.nombre);
+                
+                case 'retiros':
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            fecha: cleanRow.fecha || '',
+                            montoTotal: parseNumber(cleanRow.montototal),
+                            observaciones: cleanRow.observaciones || ''
+                        };
+                    }).filter(row => row.fecha);
+                
+                default:
+                    return data;
+            }
+        }
+
+        // Mock data for testing
+        function loadMockData() {
+            appData.totales = [
+                { mes: 'Enero', año: 2026, ingresos: 2500000, gastos: 1800000, retiros: 200000 },
+                { mes: 'Febrero', año: 2026, ingresos: 3000000, gastos: 2100000, retiros: 300000 }
+            ];
+
+            appData.gastos = [
+                { fecha: '2026-01-15', categoria: 'Proveedor', subcategoria: '', proveedor: 'Avi', montoTotal: 500000, montoPagado: 0, estado: 'A deber', observaciones: '', medioPago: 'No aplica' },
+                { fecha: '2026-01-20', categoria: 'Gasto Fijo', subcategoria: 'Sueldos', proveedor: '', montoTotal: 800000, montoPagado: 800000, estado: 'Pagado total', observaciones: '', medioPago: 'Transferencia' }
+            ];
+
+            appData.ingresos = [
+                { fecha: '2026-01-10', concepto: 'Consulta', tipo: 'Consulta', monto: 50000, medioCobro: 'Efectivo', observaciones: '' },
+                { fecha: '2026-01-15', concepto: 'Venta vacunas', tipo: 'Venta de productos', monto: 120000, medioCobro: 'Transferencia', observaciones: '' }
+            ];
+
+            appData.proveedores = [
+                { nombre: 'Avi', totalAcumulado: 2000000, pagado: 1500000, pendiente: 500000, ultimaFactura: '2026-01-15' },
+                { nombre: 'Ceva', totalAcumulado: 1500000, pagado: 1000000, pendiente: 500000, ultimaFactura: '2026-01-10' }
+            ];
+
+            appData.retiros = [
+                { fecha: '2026-01-25', montoTotal: 200000, observaciones: 'Gastos personales' }
+            ];
+
+            renderDashboard();
+            renderGastos();
+            renderIngresos();
+            renderProveedores();
+            renderRetiros();
+        }
+
+        // Función para navegar a una sección con mes pre-seleccionado (MODIFICACIÓN 3)
+        function irASeccion(seccion, mes) {
+            // Cambiar a la pestaña
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+            const tab = document.querySelector(`[data-tab="${seccion}"]`);
+            const content = document.getElementById(seccion);
+    
+            if (tab && content) {
+                tab.classList.add('active');
+                content.classList.add('active');
+        
+                // Expandir el acordeón del mes seleccionado
+                setTimeout(() => {
+                    const acordeonItem = document.querySelector(`#${seccion}-accordion-container .accordion-item[data-mes="${mes}"]`);
+                    if (acordeonItem && !acordeonItem.classList.contains('open')) {
+                        acordeonItem.querySelector('.accordion-header').click();
+                    }
+                }, 100);
+        
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // Render Dashboard
+        function renderDashboard() {
+            const monthSelect = document.getElementById('dashboard-month');
+            const statsContainer = document.getElementById('dashboard-stats');
+
+            // Populate month selector
+            monthSelect.innerHTML = appData.totales.map((item, index) => 
+                `<option value="${index}">${item.mes} ${item.año}</option>`
+            ).join('');
+
+            // Show CURRENT month by default (MODIFICACIÓN 2)
+            if (appData.totales.length > 0) {
+                const hoy = new Date();
+                const mesActual = hoy.toLocaleString('es-AR', { month: 'long' });
+                const añoActual = hoy.getFullYear();
+        
+                // Buscar el mes actual en los datos
+                const indexMesActual = appData.totales.findIndex(t => 
+                    t.mes.toLowerCase() === mesActual.toLowerCase() && t.año === añoActual
+                );
+        
+                if (indexMesActual !== -1) {
+                    monthSelect.value = indexMesActual;
+                    updateDashboardStats(indexMesActual);
+                } else {
+                    // Si no encuentra el mes actual, mostrar el último mes disponible
+                    const ultimoIndex = appData.totales.length - 1;
+                    monthSelect.value = ultimoIndex;
+                    updateDashboardStats(ultimoIndex);
+                }
+             }
+
+             // Month change listener
+             monthSelect.addEventListener('change', (e) => {
+                 updateDashboardStats(parseInt(e.target.value));
+             });
+        }
+
+        function updateDashboardStats(index) {
+            const data = appData.totales[index];
+            const neto = data.ingresos - data.gastos - data.retiros;
+            const mesSeleccionado = data.mes;
+    
+            const statsContainer = document.getElementById('dashboard-stats');
+            statsContainer.innerHTML = `
+                <div class="stat-card success clickable" onclick="irASeccion('ingresos', '${mesSeleccionado}')">
+                    <div class="stat-label">💰 Ingresos</div>
+                    <div class="stat-value success">${formatCurrency(data.ingresos)}</div>
+                    <div class="click-hint">Click para ver detalle →</div>
+                </div>
+                <div class="stat-card danger clickable" onclick="irASeccion('gastos', '${mesSeleccionado}')">
+                    <div class="stat-label">💸 Gastos</div>
+                    <div class="stat-value danger">${formatCurrency(data.gastos)}</div>
+                    <div class="click-hint">Click para ver detalle →</div>
+                </div>
+                <div class="stat-card warning clickable" onclick="irASeccion('retiros', '${mesSeleccionado}')">
+                    <div class="stat-label">👤 Retiros</div>
+                    <div class="stat-value">${formatCurrency(data.retiros)}</div>
+                    <div class="click-hint">Click para ver detalle →</div>
+                </div>
+                    <div class="stat-card ${neto >= 0 ? 'success' : 'danger'}">
+                    <div class="stat-label">💵 Neto</div>
+                    <div class="stat-value ${neto >= 0 ? 'success' : 'danger'}">${formatCurrency(neto)}</div>
+                </div>
+            `;
+
+            updateChart(data);
+        }
+
+        // Chart
+        let chartInstance = null;
+
+        function updateChart(data) {
+            const ctx = document.getElementById('dashboard-chart');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Ingresos', 'Gastos', 'Retiros'],
+                    datasets: [{
+                        label: 'Monto',
+                        data: [data.ingresos, data.gastos, data.retiros],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(16, 185, 129)',
+                            'rgb(239, 68, 68)',
+                            'rgb(245, 158, 11)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render Gastos con acordeón (MODIFICACIÓN 4)
+        function renderGastos() {
+            const container = document.getElementById('gastos-accordion-container');
+
+            if (appData.gastos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay gastos registrados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Agrupar por mes
+            const grouped = groupByMonth(appData.gastos, 'fecha');
+    
+            let html = '';
+    
+            Object.entries(grouped).forEach(([month, items]) => {
+                const totalMes = items.reduce((sum, item) => sum + item.montoTotal, 0);
+        
+                // Calcular totales por categoría (SIN Retiro Personal)
+                const porCategoria = {};
+                items.forEach(item => {
+                    const cat = item.categoria;
+                    if (cat !== 'Retiro Personal') {  // Excluir retiros
+                        porCategoria[cat] = (porCategoria[cat] || 0) + item.montoTotal;
+                    }
+                });
+        
+                // Calcular total sin retiros
+                const totalSinRetiros = Object.values(porCategoria).reduce((sum, val) => sum + val, 0);
+        
+                html += `
+                    <div class="accordion-item" data-mes="${month.split(' ')[0]}">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span>📅</span>
+                                <span>${month}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div class="accordion-summary">
+                                    ${items.length} ${items.length === 1 ? 'gasto' : 'gastos'} · Total: ${formatCurrency(totalMes)}
+                                </div>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="accordion-body">
+                                <div class="data-table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Proveedor/Detalle</th>
+                                                <th>Monto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${items.map(item => `
+                                                <tr onclick="showGastoDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                                                    <td>${formatDate(item.fecha)}</td>
+                                                    <td>${item.proveedor || item.subcategoria || 'N/A'}</td>
+                                                    <td class="amount negative">${formatCurrency(item.montoTotal)}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                        
+                                <!-- Tabla Resumen por Categoría -->
+                                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
+                                    <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">📊 Resumen por Categoría</h4>
+                                    <table class="data-table" style="background: white;">
+                                        <thead>
+                                            <tr>
+                                                <th style="text-align: left;">Categoría</th>
+                                                <th style="text-align: right;">Monto Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${Object.entries(porCategoria).map(([cat, monto]) => `
+                                                <tr>
+                                                    <td style="font-weight: 500;">${cat}</td>
+                                                    <td class="amount" style="text-align: right;">${formatCurrency(monto)}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style="background: rgba(139, 21, 56, 0.1); font-weight: 700;">
+                                                <td style="padding: 0.75rem;">TOTAL</td>
+                                                <td class="amount negative" style="text-align: right; padding: 0.75rem;">${formatCurrency(totalSinRetiros)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+    
+            container.innerHTML = html;
+        }
+
+        // Show gasto detail modal
+        function showGastoDetail(item) {
+            const modal = document.getElementById('detail-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            
+            modalTitle.textContent = item.proveedor || item.subcategoria || 'Detalle del Gasto';
+            
+            const badge = item.estado === 'Pagado total' ? 'badge-success' : 
+                         item.estado === 'A deber' ? 'badge-danger' : 'badge-warning';
+            
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">Monto Total</div>
+                    <div class="detail-value highlight">${formatCurrency(item.montoTotal)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Fecha</div>
+                    <div class="detail-value">${formatDate(item.fecha)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Categoría</div>
+                    <div class="detail-value">${item.categoria}</div>
+                </div>
+                ${item.subcategoria ? `
+                <div class="detail-row">
+                    <div class="detail-label">Subcategoría</div>
+                    <div class="detail-value">${item.subcategoria}</div>
+                </div>` : ''}
+                ${item.proveedor ? `
+                <div class="detail-row">
+                    <div class="detail-label">Proveedor</div>
+                    <div class="detail-value">${item.proveedor}</div>
+                </div>` : ''}
+                <div class="detail-row">
+                    <div class="detail-label">Monto Pagado</div>
+                    <div class="detail-value">${formatCurrency(item.montoPagado)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Estado</div>
+                    <div class="detail-value"><span class="badge ${badge}">${item.estado}</span></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Medio de Pago</div>
+                    <div class="detail-value">${item.medioPago}</div>
+                </div>
+                ${item.observaciones ? `
+                <div class="detail-row">
+                    <div class="detail-label">Observaciones</div>
+                    <div class="detail-value">${item.observaciones}</div>
+                </div>` : ''}
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        // Render Ingresos con acordeón (MODIFICACIÓN 4)
+        function renderIngresos() {
+            const container = document.getElementById('ingresos-accordion-container');
+
+            if (appData.ingresos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay ingresos registrados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Agrupar por mes
+            const grouped = groupByMonth(appData.ingresos, 'fecha');
+    
+            let html = '';
+    
+            Object.entries(grouped).forEach(([month, items]) => {
+                const totalMes = items.reduce((sum, item) => sum + item.monto, 0);
+        
+                // Calcular totales por tipo
+                const porTipo = {};
+                items.forEach(item => {
+                    const tipo = item.tipo;
+                    porTipo[tipo] = (porTipo[tipo] || 0) + item.monto;
+                });
+        
+                // Calcular totales por medio de cobro
+                const porMedio = {};
+                items.forEach(item => {
+                    const medio = item.medioCobro;
+                    porMedio[medio] = (porMedio[medio] || 0) + item.monto;
+                });
+        
+                html += `
+                    <div class="accordion-item" data-mes="${month.split(' ')[0]}">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span>📅</span>
+                                <span>${month}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div class="accordion-summary">
+                                    ${items.length} ${items.length === 1 ? 'ingreso' : 'ingresos'} · Total: ${formatCurrency(totalMes)}
+                                </div>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="accordion-body">
+                                <div class="data-table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Tipo</th>
+                                                <th>Monto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${items.map(item => `
+                                                <tr onclick="showIngresoDetail(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                                                    <td>${formatDate(item.fecha)}</td>
+                                                    <td>${item.tipo}</td>
+                                                    <td class="amount positive">${formatCurrency(item.monto)}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                        
+                                <!-- Tablas Resumen -->
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                                    
+                                    <!-- Tabla Por Tipo -->
+                                    <div style="padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
+                                        <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">📊 Por Tipo</h4>
+                                        <table class="data-table" style="background: white;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align: left;">Tipo</th>
+                                                    <th style="text-align: right;">Monto Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${Object.entries(porTipo).map(([tipo, monto]) => `
+                                                    <tr>
+                                                        <td style="font-weight: 500;">${tipo}</td>
+                                                        <td class="amount positive" style="text-align: right;">${formatCurrency(monto)}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style="background: rgba(16, 185, 129, 0.1); font-weight: 700;">
+                                                    <td style="padding: 0.75rem;">TOTAL</td>
+                                                    <td class="amount positive" style="text-align: right; padding: 0.75rem;">${formatCurrency(totalMes)}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+
+                                    <!-- Tabla Por Medio de Cobro -->
+                                    <div style="padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
+                                        <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">💳 Por Medio de Cobro</h4>
+                                        <table class="data-table" style="background: white;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align: left;">Medio de Cobro</th>
+                                                    <th style="text-align: right;">Monto Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${Object.entries(porMedio).map(([medio, monto]) => `
+                                                    <tr>
+                                                        <td style="font-weight: 500;">${medio}</td>
+                                                        <td class="amount positive" style="text-align: right;">${formatCurrency(monto)}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style="background: rgba(16, 185, 129, 0.1); font-weight: 700;">
+                                                    <td style="padding: 0.75rem;">TOTAL</td>
+                                                    <td class="amount positive" style="text-align: right; padding: 0.75rem;">${formatCurrency(totalMes)}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+    
+            container.innerHTML = html;
+        }
+
+        // Show ingreso detail modal
+        function showIngresoDetail(item) {
+            const modal = document.getElementById('detail-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            
+            modalTitle.textContent = item.tipo || 'Detalle del Ingreso';
+            
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">Monto</div>
+                    <div class="detail-value highlight" style="color: var(--success-color);">${formatCurrency(item.monto)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Fecha</div>
+                    <div class="detail-value">${formatDate(item.fecha)}</div>
+                </div>
+                ${item.concepto ? `
+                <div class="detail-row">
+                    <div class="detail-label">Concepto</div>
+                    <div class="detail-value">${item.concepto}</div>
+                </div>` : ''}
+                <div class="detail-row">
+                    <div class="detail-label">Tipo</div>
+                    <div class="detail-value">${item.tipo}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Medio de Cobro</div>
+                    <div class="detail-value">${item.medioCobro}</div>
+                </div>
+                ${item.observaciones ? `
+                <div class="detail-row">
+                    <div class="detail-label">Observaciones</div>
+                    <div class="detail-value">${item.observaciones}</div>
+                </div>` : ''}
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        // Render Proveedores
+        function renderProveedores() {
+            const container = document.getElementById('proveedores-table-container');
+
+            if (appData.proveedores.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay proveedores registrados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Calculate totals
+            const totalDebt = appData.proveedores.reduce((sum, p) => sum + p.pendiente, 0);
+            const totalAccumulated = appData.proveedores.reduce((sum, p) => sum + p.totalAcumulado, 0);
+
+            let html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1.5rem; background: var(--card-bg);">
+                    <div style="padding: 1rem; background: rgba(139, 21, 56, 0.1); border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ACUMULADO</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(totalAccumulated)}</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ADEUDADO</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color);">${formatCurrency(totalDebt)}</div>
+                    </div>
+                </div>
+                
+                <div class="data-table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Proveedor</th>
+                            <th>Total Acumulado</th>
+                            <th>Pendiente</th>
+                            <th>Última Factura</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // Sort by pending amount (highest first)
+            const sorted = [...appData.proveedores].sort((a, b) => b.pendiente - a.pendiente);
+
+            sorted.forEach(item => {
+                const hasDebt = item.pendiente > 0;
+                const rowClass = hasDebt ? 'style="background: rgba(239, 68, 68, 0.05);"' : '';
+                
+                html += `
+                    <tr ${rowClass}>
+                        <td style="font-weight: 600;">${item.nombre}</td>
+                        <td class="amount">${formatCurrency(item.totalAcumulado)}</td>
+                        <td class="amount ${hasDebt ? 'negative' : ''}" style="${hasDebt ? 'font-weight: 700;' : ''}">${formatCurrency(item.pendiente)}</td>
+                        <td>${formatDate(item.ultimaFactura)}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        // Render Retiros con acordeón (MODIFICACIÓN 4)
+        function renderRetiros() {
+            const container = document.getElementById('retiros-accordion-container');
+
+            if (appData.retiros.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay retiros registrados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Agrupar por mes
+            const grouped = groupByMonth(appData.retiros, 'fecha');
+    
+            let html = '';
+    
+            Object.entries(grouped).forEach(([month, items]) => {
+                const totalMes = items.reduce((sum, item) => sum + item.montoTotal, 0);
+        
+                html += `
+                    <div class="accordion-item" data-mes="${month.split(' ')[0]}">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span>📅</span>
+                                <span>${month}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div class="accordion-summary">
+                                    ${items.length} ${items.length === 1 ? 'retiro' : 'retiros'} · Total: ${formatCurrency(totalMes)}
+                                </div>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="accordion-body">
+                                <div class="data-table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Monto</th>
+                                                <th>Observaciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${items.map(item => `
+                                                <tr>
+                                                    <td>${formatDate(item.fecha)}</td>
+                                                    <td class="amount">${formatCurrency(item.montoTotal)}</td>
+                                                    <td>${item.observaciones || '-'}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+    
+            container.innerHTML = html;
+        }
+
+        // Close modal function
+        function closeModal() {
+            document.getElementById('detail-modal').classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('detail-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Utility functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            
+            try {
+                // Handle different date formats
+                let date;
+                
+                // If it's in D/M/YYYY format (from Google Sheets Argentina)
+                if (dateString.includes('/')) {
+                    const parts = dateString.split('/');
+                    // Format is DD/MM/YYYY (Argentine format)
+                    const day = parseInt(parts[0]);
+                    const month = parseInt(parts[1]);
+                    const year = parseInt(parts[2]);
+                    
+                    date = new Date(year, month - 1, day);
+                } else if (dateString.includes('-')) {
+                    // YYYY-MM-DD format
+                    date = new Date(dateString);
+                } else {
+                    date = new Date(dateString);
+                }
+                
+                // Validate date
+                if (isNaN(date.getTime())) {
+                    return dateString; // Return original if can't parse
+                }
+                
+                // Format as DD/MM/YYYY
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                console.error('Error formatting date:', dateString, e);
+                return dateString;
+            }
+        }
+
+        function getMonthFromDate(dateString) {
+            if (!dateString) return 'Sin fecha';
+            
+            try {
+                let date;
+                
+                // Handle DD/MM/YYYY format (Argentine)
+                if (dateString.includes('/')) {
+                    const parts = dateString.split('/');
+                    const day = parseInt(parts[0]);
+                    const month = parseInt(parts[1]);
+                    const year = parseInt(parts[2]);
+                    
+                    date = new Date(year, month - 1, day);
+                } else if (dateString.includes('-')) {
+                    date = new Date(dateString);
+                } else {
+                    date = new Date(dateString);
+                }
+                
+                if (isNaN(date.getTime())) {
+                    return 'Fecha inválida';
+                }
+                
+                const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                              'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                return `${months[date.getMonth()]} ${date.getFullYear()}`;
+            } catch (e) {
+                console.error('Error parsing date:', dateString, e);
+                return 'Fecha inválida';
+            }
+        }
+
+        function groupByMonth(items, dateField) {
+            const grouped = {};
+            items.forEach(item => {
+                const month = getMonthFromDate(item[dateField]);
+                if (!grouped[month]) grouped[month] = [];
+                grouped[month].push(item);
+            });
+            return grouped;
+        }
+
+        function showError() {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <p>Error al cargar los datos. Por favor, intenta nuevamente más tarde.</p>
+                    </div>
+                `;
+            });
+        }
+
+        // Función para toggle de acordeón (MODIFICACIÓN 4)
+        function toggleAccordion(header) {
+            const item = header.parentElement;
+            const wasOpen = item.classList.contains('open');
+    
+            // Cerrar todos los acordeones
+            document.querySelectorAll('.accordion-item').forEach(i => {
+                i.classList.remove('open');
+            });
+    
+            // Abrir el clickeado si estaba cerrado
+            if (!wasOpen) {
+                item.classList.add('open');
+            }
+        }
+    </script>
+</body>
+</html>
