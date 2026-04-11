@@ -1820,16 +1820,16 @@
                 ${htmlCards}
 
                 <!-- Totales del proveedor -->
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.5rem;">
+                <div style="display:grid; grid-template-columns:${datosProveedor ? '1fr 1fr' : '1fr'}; gap:0.6rem; margin-top:1rem;">
                     ${datosProveedor ? `
-                    <div style="padding:1.25rem; background:var(--accent-light); border-radius:12px; text-align:center; border-left:4px solid var(--primary-color);">
-                        <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.5px;">Total Acumulado</div>
-                        <div style="font-size:1.5rem; font-weight:700; color:var(--primary-color);">${formatCurrency(datosProveedor.totalAcumulado)}</div>
+                    <div style="padding:0.75rem; background:var(--accent-light); border-radius:10px; text-align:center; border-left:3px solid var(--primary-color);">
+                        <div style="font-size:0.65rem; color:var(--text-secondary); margin-bottom:0.25rem; text-transform:uppercase; letter-spacing:0.4px;">Total Acumulado</div>
+                        <div style="font-size:1rem; font-weight:700; color:var(--primary-color);">${formatCurrency(datosProveedor.totalAcumulado)}</div>
                     </div>
                     ` : ''}
-                    <div style="padding:1.25rem; background:rgba(16,185,129,0.08); border-radius:12px; text-align:center; border-left:4px solid var(--success-color);">
-                        <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.5px;">Total Pagado</div>
-                        <div style="font-size:1.5rem; font-weight:700; color:var(--success-color);">${formatCurrency(totalPagado)}</div>
+                    <div style="padding:0.75rem; background:rgba(16,185,129,0.08); border-radius:10px; text-align:center; border-left:3px solid var(--success-color);">
+                        <div style="font-size:0.65rem; color:var(--text-secondary); margin-bottom:0.25rem; text-transform:uppercase; letter-spacing:0.4px;">Total Pagado</div>
+                        <div style="font-size:1rem; font-weight:700; color:var(--success-color);">${formatCurrency(totalPagado)}</div>
                     </div>
                 </div>
             `;
