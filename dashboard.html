@@ -1708,9 +1708,8 @@
                 return fechaB - fechaA; // Descendente (más nuevo primero)
             });
             
-            // Limitar a últimos 6 movimientos
-            const movimientos = todosMovimientos.slice(0, 6);
-            const hayMas = todosMovimientos.length > 6;
+            // Mostrar TODOS los movimientos (sin límite)
+            const movimientos = todosMovimientos;
             
             // Obtener datos del proveedor para total acumulado
             const datosProveedor = appData.proveedores.find(p => 
@@ -1767,12 +1766,6 @@
                         </tbody>
                     </table>
                 </div>
-                
-                ${hayMas ? `
-                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(139, 21, 56, 0.05); border-radius: 8px; text-align: center; color: var(--text-secondary); font-size: 0.875rem;">
-                        📄 Mostrando últimos 6 de ${todosMovimientos.length} movimientos totales
-                    </div>
-                ` : ''}
                 
                 <!-- Total Acumulado del proveedor -->
                 ${datosProveedor ? `
