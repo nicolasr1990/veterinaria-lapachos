@@ -806,7 +806,8 @@
                     loadSheetData('GASTOS_SIN_RETIROS', 'gastos'),
                     loadSheetData('INGRESOS', 'ingresos'),
                     loadSheetData('PROVEEDORES', 'proveedores'),
-                    loadSheetData('SOLO_RETIROS', 'retiros')
+                    loadSheetData('SOLO_RETIROS', 'retiros'),
+                    loadSheetData('Respuestas de formulario 1', 'formGastos') // NUEVO
                 ]);
 
                 renderDashboard();
@@ -1025,6 +1026,30 @@
                             observaciones: cleanRow.observaciones || ''
                         };
                     }).filter(row => row.fecha);
+                
+                case 'formGastos':
+                    // Respuestas de formulario 1 - Historial completo
+                    return data.map(row => {
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = cleanFieldName(key);
+                            cleanRow[cleanKey] = cleanValue(row[key]);
+                        });
+                        
+                        return {
+                            marcaTemporal: cleanRow.marcatemporal || '',
+                            fecha: cleanRow.fecha || '',
+                            categoria: cleanRow.categoria || '',
+                            subcategoria: cleanRow.subcategoria || '',
+                            proveedor: cleanRow.proveedor || '',
+                            montoTotal: parseNumber(cleanRow.montototal),
+                            montoPagado: parseNumber(cleanRow.montopagado),
+                            estado: cleanRow.estado || '',
+                            medioPago: cleanRow.mediodepago || '',
+                            observaciones: cleanRow.observaciones || '',
+                            tipoMovimiento: cleanRow.tipodemovimiento || ''
+                        };
+                    }).filter(row => row.fecha && row.categoria === 'Proveedor');
                 
                 default:
                     return data;
@@ -1553,7 +1578,7 @@
             modal.classList.add('active');
         }
 
-        // Render Proveedores
+        // Render Proveedores con buscador y modal de historial
         function renderProveedores() {
             const container = document.getElementById('proveedores-table-container');
 
@@ -1572,17 +1597,20 @@
             const totalAccumulated = appData.proveedores.reduce((sum, p) => sum + p.totalAcumulado, 0);
 
             let html = `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1.5rem; background: var(--card-bg);">
-                    <div style="padding: 1rem; background: rgba(139, 21, 56, 0.1); border-radius: 8px; border-left: 4px solid var(--primary-color);">
-                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ACUMULADO</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(totalAccumulated)}</div>
-                    </div>
-                    <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
-                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ADEUDADO</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color);">${formatCurrency(totalDebt)}</div>
+                <!-- Buscador -->
+                <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--card-bg); border-radius: 12px;">
+                    <div style="position: relative;">
+                        <input 
+                            type="text" 
+                            id="proveedor-search" 
+                            placeholder="🔍 Buscar proveedor..." 
+                            style="width: 100%; padding: 0.75rem 1rem; font-size: 1rem; border: 2px solid var(--border-color); border-radius: 8px; outline: none; transition: border-color 0.3s;"
+                            onkeyup="filtrarProveedores(this.value)"
+                        >
                     </div>
                 </div>
                 
+                <!-- Tabla de proveedores -->
                 <div class="data-table-wrapper">
                 <table class="data-table">
                     <thead>
@@ -1591,9 +1619,10 @@
                             <th>Total Acumulado</th>
                             <th>Pendiente</th>
                             <th>Última Factura</th>
+                            <th style="width: 80px;">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="proveedores-tbody">
             `;
 
             // Sort by pending amount (highest first)
@@ -1604,17 +1633,147 @@
                 const rowClass = hasDebt ? 'style="background: rgba(239, 68, 68, 0.05);"' : '';
                 
                 html += `
-                    <tr ${rowClass}>
+                    <tr ${rowClass} data-proveedor="${item.nombre}">
                         <td style="font-weight: 600;">${item.nombre}</td>
                         <td class="amount">${formatCurrency(item.totalAcumulado)}</td>
                         <td class="amount ${hasDebt ? 'negative' : ''}" style="${hasDebt ? 'font-weight: 700;' : ''}">${formatCurrency(item.pendiente)}</td>
                         <td>${formatDate(item.ultimaFactura)}</td>
+                        <td>
+                            <button 
+                                onclick="verHistorialProveedor('${item.nombre.replace(/'/g, "\\'")}')" 
+                                style="background: var(--primary-color); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: all 0.3s;"
+                                onmouseover="this.style.background='#6B0F2B'" 
+                                onmouseout="this.style.background='var(--primary-color)'"
+                            >
+                                Ver
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
 
-            html += '</tbody></table></div>';
+            html += `
+                    </tbody>
+                </table>
+                </div>
+                
+                <!-- Tarjetas de totales al final -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border-radius: 12px;">
+                    <div style="padding: 1rem; background: rgba(139, 21, 56, 0.1); border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ACUMULADO</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(totalAccumulated)}</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ADEUDADO</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color);">${formatCurrency(totalDebt)}</div>
+                    </div>
+                </div>
+            `;
+            
             container.innerHTML = html;
+        }
+
+        // Filtrar proveedores por búsqueda
+        function filtrarProveedores(busqueda) {
+            const filas = document.querySelectorAll('#proveedores-tbody tr');
+            const busquedaLower = busqueda.toLowerCase().trim();
+            
+            filas.forEach(fila => {
+                const nombreProveedor = fila.getAttribute('data-proveedor').toLowerCase();
+                if (nombreProveedor.includes(busquedaLower)) {
+                    fila.style.display = '';
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+        }
+
+        // Ver historial completo de un proveedor
+        function verHistorialProveedor(nombreProveedor) {
+            // Filtrar movimientos de este proveedor desde formGastos
+            const movimientos = (appData.formGastos || []).filter(m => 
+                m.proveedor && m.proveedor.trim().toLowerCase() === nombreProveedor.trim().toLowerCase()
+            );
+
+            if (movimientos.length === 0) {
+                alert('No hay movimientos registrados para este proveedor.');
+                return;
+            }
+
+            // Ordenar por fecha (más reciente primero)
+            movimientos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            // Crear modal
+            const modal = document.getElementById('detail-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+
+            modalTitle.textContent = `📋 Historial de ${nombreProveedor}`;
+
+            let html = `
+                <div class="data-table-wrapper" style="max-height: 500px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Monto Total</th>
+                                <th>Monto Pagado</th>
+                                <th>Estado</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            movimientos.forEach(mov => {
+                const tieneObservacion = mov.observaciones && mov.observaciones.trim() !== '';
+                const esNuevaFactura = mov.tipoMovimiento === 'Nueva factura/compra';
+                const rowStyle = tieneObservacion ? 'background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--danger-color);' : '';
+                
+                html += `
+                    <tr style="${rowStyle}">
+                        <td>${formatDate(mov.fecha)}</td>
+                        <td>
+                            <span style="display: inline-block; padding: 0.25rem 0.75rem; background: ${esNuevaFactura ? 'rgba(139, 21, 56, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; color: ${esNuevaFactura ? 'var(--primary-color)' : 'var(--success-color)'}; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                                ${esNuevaFactura ? '📄 Factura' : '💰 Pago'}
+                            </span>
+                        </td>
+                        <td class="amount">${formatCurrency(mov.montoTotal)}</td>
+                        <td class="amount ${mov.montoPagado > 0 ? 'positive' : ''}">${formatCurrency(mov.montoPagado)}</td>
+                        <td>${mov.estado}</td>
+                        <td style="${tieneObservacion ? 'font-weight: 600; color: var(--danger-color);' : ''}">
+                            ${tieneObservacion ? '⚠️ ' + mov.observaciones : '-'}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--accent-light); border-radius: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; text-align: center;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">MOVIMIENTOS</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${movimientos.length}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">FACTURAS</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">${movimientos.filter(m => m.tipoMovimiento === 'Nueva factura/compra').length}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">PAGOS</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--success-color);">${movimientos.filter(m => m.tipoMovimiento === 'Pago de deuda existente').length}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modalBody.innerHTML = html;
+            modal.classList.add('active');
         }
 
         // Render Retiros con acordeón (MODIFICACIÓN 4)
