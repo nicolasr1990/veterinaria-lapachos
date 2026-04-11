@@ -1621,7 +1621,6 @@
                     <thead>
                         <tr>
                             <th>Proveedor</th>
-                            <th>Total Acumulado</th>
                             <th>Pendiente</th>
                             <th style="width: 80px;">Acciones</th>
                         </tr>
@@ -1639,7 +1638,6 @@
                 html += `
                     <tr ${rowClass} data-proveedor="${item.nombre}">
                         <td style="font-weight: 600;">${item.nombre}</td>
-                        <td class="amount">${formatCurrency(item.totalAcumulado)}</td>
                         <td class="amount ${hasDebt ? 'negative' : ''}" style="${hasDebt ? 'font-weight: 700;' : ''}">${formatCurrency(item.pendiente)}</td>
                         <td>
                             <button 
@@ -1703,12 +1701,21 @@
                 return;
             }
 
-            // Ordenar por fecha (más reciente primero)
-            todosMovimientos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            // Ordenar por fecha (más reciente primero) - CORREGIDO
+            todosMovimientos.sort((a, b) => {
+                const fechaA = parseFecha(a.fecha);
+                const fechaB = parseFecha(b.fecha);
+                return fechaB - fechaA; // Descendente (más nuevo primero)
+            });
             
             // Limitar a últimos 6 movimientos
             const movimientos = todosMovimientos.slice(0, 6);
             const hayMas = todosMovimientos.length > 6;
+            
+            // Obtener datos del proveedor para total acumulado
+            const datosProveedor = appData.proveedores.find(p => 
+                p.nombre.trim().toLowerCase() === nombreProveedor.trim().toLowerCase()
+            );
 
             // Crear modal
             const modal = document.getElementById('detail-modal');
@@ -1720,12 +1727,12 @@
             let html = `
                 <div class="data-table-wrapper" style="max-height: 500px; overflow-x: auto; overflow-y: auto;">
                     <table class="data-table" style="font-size: 0.875rem;">
-                        <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                        <thead style="position: sticky; top: 0; background: white; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <tr>
                                 <th style="min-width: 90px;">Fecha</th>
                                 <th class="hide-mobile" style="min-width: 100px;">Tipo</th>
-                                <th style="min-width: 100px;">Monto Total</th>
-                                <th style="min-width: 100px;">Pagado</th>
+                                <th style="min-width: 110px;">Monto Total</th>
+                                <th style="min-width: 110px;">Pagado</th>
                                 <th class="hide-mobile" style="min-width: 90px;">Estado</th>
                                 <th style="min-width: 150px;">Observaciones</th>
                             </tr>
@@ -1767,22 +1774,13 @@
                     </div>
                 ` : ''}
                 
-                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--accent-light); border-radius: 8px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; text-align: center;">
-                        <div>
-                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem;">TOTAL</div>
-                            <div style="font-size: 1.1rem; font-weight: 700;">${todosMovimientos.length}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem;">FACTURAS</div>
-                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-color);">${todosMovimientos.filter(m => m.tipoMovimiento === 'Nueva factura/compra').length}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem;">PAGOS</div>
-                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--success-color);">${todosMovimientos.filter(m => m.tipoMovimiento === 'Pago de deuda existente').length}</div>
-                        </div>
+                <!-- Total Acumulado del proveedor -->
+                ${datosProveedor ? `
+                    <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--accent-light); border-radius: 12px; text-align: center;">
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ACUMULADO</div>
+                        <div style="font-size: 1.75rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(datosProveedor.totalAcumulado)}</div>
                     </div>
-                </div>
+                ` : ''}
             `;
 
             modalBody.innerHTML = html;
@@ -1870,6 +1868,35 @@
         });
 
         // Utility functions
+        // Parsear fecha DD/MM/YYYY a objeto Date
+        function parseFecha(fechaStr) {
+            if (!fechaStr) return new Date(0); // Fecha muy vieja si no hay
+            
+            // Si ya es un objeto Date
+            if (fechaStr instanceof Date) return fechaStr;
+            
+            const str = String(fechaStr).trim();
+            
+            // Formato DD/MM/YYYY (argentino)
+            if (str.includes('/')) {
+                const partes = str.split('/');
+                if (partes.length === 3) {
+                    const dia = parseInt(partes[0]);
+                    const mes = parseInt(partes[1]) - 1; // Meses son 0-indexed
+                    const anio = parseInt(partes[2]);
+                    return new Date(anio, mes, dia);
+                }
+            }
+            
+            // Formato YYYY-MM-DD
+            if (str.includes('-')) {
+                return new Date(str);
+            }
+            
+            // Default
+            return new Date(fechaStr);
+        }
+        
         function formatCurrency(amount) {
             return new Intl.NumberFormat('es-AR', {
                 style: 'currency',
