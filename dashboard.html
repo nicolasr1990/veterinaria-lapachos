@@ -394,6 +394,11 @@
                 padding: 1rem;
                 font-size: 0.875rem;
             }
+            
+            /* Ocultar columnas en móvil para modal de proveedores */
+            .hide-mobile {
+                display: none !important;
+            }
         }
 
         /* Amount formatting */
@@ -1618,7 +1623,6 @@
                             <th>Proveedor</th>
                             <th>Total Acumulado</th>
                             <th>Pendiente</th>
-                            <th>Última Factura</th>
                             <th style="width: 80px;">Acciones</th>
                         </tr>
                     </thead>
@@ -1637,7 +1641,6 @@
                         <td style="font-weight: 600;">${item.nombre}</td>
                         <td class="amount">${formatCurrency(item.totalAcumulado)}</td>
                         <td class="amount ${hasDebt ? 'negative' : ''}" style="${hasDebt ? 'font-weight: 700;' : ''}">${formatCurrency(item.pendiente)}</td>
-                        <td>${formatDate(item.ultimaFactura)}</td>
                         <td>
                             <button 
                                 onclick="verHistorialProveedor('${item.nombre.replace(/'/g, "\\'")}')" 
@@ -1691,17 +1694,21 @@
         // Ver historial completo de un proveedor
         function verHistorialProveedor(nombreProveedor) {
             // Filtrar movimientos de este proveedor desde formGastos
-            const movimientos = (appData.formGastos || []).filter(m => 
+            const todosMovimientos = (appData.formGastos || []).filter(m => 
                 m.proveedor && m.proveedor.trim().toLowerCase() === nombreProveedor.trim().toLowerCase()
             );
 
-            if (movimientos.length === 0) {
+            if (todosMovimientos.length === 0) {
                 alert('No hay movimientos registrados para este proveedor.');
                 return;
             }
 
             // Ordenar por fecha (más reciente primero)
-            movimientos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            todosMovimientos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            // Limitar a últimos 6 movimientos
+            const movimientos = todosMovimientos.slice(0, 6);
+            const hayMas = todosMovimientos.length > 6;
 
             // Crear modal
             const modal = document.getElementById('detail-modal');
@@ -1711,16 +1718,16 @@
             modalTitle.textContent = `📋 Historial de ${nombreProveedor}`;
 
             let html = `
-                <div class="data-table-wrapper" style="max-height: 500px; overflow-y: auto;">
-                    <table class="data-table">
+                <div class="data-table-wrapper" style="max-height: 500px; overflow-x: auto; overflow-y: auto;">
+                    <table class="data-table" style="font-size: 0.875rem;">
                         <thead style="position: sticky; top: 0; background: white; z-index: 10;">
                             <tr>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Monto Total</th>
-                                <th>Monto Pagado</th>
-                                <th>Estado</th>
-                                <th>Observaciones</th>
+                                <th style="min-width: 90px;">Fecha</th>
+                                <th class="hide-mobile" style="min-width: 100px;">Tipo</th>
+                                <th style="min-width: 100px;">Monto Total</th>
+                                <th style="min-width: 100px;">Pagado</th>
+                                <th class="hide-mobile" style="min-width: 90px;">Estado</th>
+                                <th style="min-width: 150px;">Observaciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1733,16 +1740,16 @@
                 
                 html += `
                     <tr style="${rowStyle}">
-                        <td>${formatDate(mov.fecha)}</td>
-                        <td>
-                            <span style="display: inline-block; padding: 0.25rem 0.75rem; background: ${esNuevaFactura ? 'rgba(139, 21, 56, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; color: ${esNuevaFactura ? 'var(--primary-color)' : 'var(--success-color)'}; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                        <td style="white-space: nowrap;">${formatDate(mov.fecha)}</td>
+                        <td class="hide-mobile">
+                            <span style="display: inline-block; padding: 0.25rem 0.5rem; background: ${esNuevaFactura ? 'rgba(139, 21, 56, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; color: ${esNuevaFactura ? 'var(--primary-color)' : 'var(--success-color)'}; border-radius: 8px; font-size: 0.7rem; font-weight: 600; white-space: nowrap;">
                                 ${esNuevaFactura ? '📄 Factura' : '💰 Pago'}
                             </span>
                         </td>
-                        <td class="amount">${formatCurrency(mov.montoTotal)}</td>
-                        <td class="amount ${mov.montoPagado > 0 ? 'positive' : ''}">${formatCurrency(mov.montoPagado)}</td>
-                        <td>${mov.estado}</td>
-                        <td style="${tieneObservacion ? 'font-weight: 600; color: var(--danger-color);' : ''}">
+                        <td class="amount" style="white-space: nowrap;">${formatCurrency(mov.montoTotal)}</td>
+                        <td class="amount ${mov.montoPagado > 0 ? 'positive' : ''}" style="white-space: nowrap;">${formatCurrency(mov.montoPagado)}</td>
+                        <td class="hide-mobile" style="font-size: 0.8rem;">${mov.estado}</td>
+                        <td style="${tieneObservacion ? 'font-weight: 600; color: var(--danger-color);' : ''} max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
                             ${tieneObservacion ? '⚠️ ' + mov.observaciones : '-'}
                         </td>
                     </tr>
@@ -1754,19 +1761,25 @@
                     </table>
                 </div>
                 
+                ${hayMas ? `
+                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(139, 21, 56, 0.05); border-radius: 8px; text-align: center; color: var(--text-secondary); font-size: 0.875rem;">
+                        📄 Mostrando últimos 6 de ${todosMovimientos.length} movimientos totales
+                    </div>
+                ` : ''}
+                
                 <div style="margin-top: 1.5rem; padding: 1rem; background: var(--accent-light); border-radius: 8px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; text-align: center;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; text-align: center;">
                         <div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">MOVIMIENTOS</div>
-                            <div style="font-size: 1.25rem; font-weight: 700;">${movimientos.length}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem;">TOTAL</div>
+                            <div style="font-size: 1.1rem; font-weight: 700;">${todosMovimientos.length}</div>
                         </div>
                         <div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">FACTURAS</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">${movimientos.filter(m => m.tipoMovimiento === 'Nueva factura/compra').length}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem;">FACTURAS</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-color);">${todosMovimientos.filter(m => m.tipoMovimiento === 'Nueva factura/compra').length}</div>
                         </div>
                         <div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">PAGOS</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--success-color);">${movimientos.filter(m => m.tipoMovimiento === 'Pago de deuda existente').length}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.25rem;">PAGOS</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--success-color);">${todosMovimientos.filter(m => m.tipoMovimiento === 'Pago de deuda existente').length}</div>
                         </div>
                     </div>
                 </div>
