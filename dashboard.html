@@ -399,7 +399,15 @@
             .hide-mobile {
                 display: none !important;
             }
+
+            /* Historial proveedor: tabla escritorio, tarjetas móvil */
+            .historial-cards-mobile  { display: flex !important; }
+            .historial-tabla-desktop { display: none !important; }
         }
+
+        /* Historial proveedor: desktop muestra tabla, oculta tarjetas */
+        .historial-cards-mobile  { display: none; }
+        .historial-tabla-desktop { display: block; }
 
         /* Amount formatting */
         .amount {
@@ -1723,71 +1731,106 @@
 
             modalTitle.textContent = `📋 Historial de ${nombreProveedor}`;
 
-            let html = `
-                <div class="data-table-wrapper" style="max-height: 500px; overflow-x: auto; overflow-y: auto;">
-                    <table class="data-table" style="font-size: 0.875rem;">
+            // Calcular total pagado sumando montoPagado de todos los movimientos
+            const totalPagado = movimientos.reduce((sum, mov) => sum + (mov.montoPagado || 0), 0);
+
+            // ── TABLA para desktop ──────────────────────────────────────────
+            let htmlTabla = `
+                <div class="historial-tabla-desktop" style="max-height: 460px; overflow-x: hidden; overflow-y: auto;">
+                    <table class="data-table" style="font-size: 0.875rem; width: 100%;">
                         <thead style="position: sticky; top: 0; background: var(--primary-color); z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                             <tr>
-                                <th style="min-width: 90px; color: white;">Fecha</th>
-                                <th class="hide-mobile" style="min-width: 100px; color: white;">Tipo</th>
-                                <th style="min-width: 110px; color: white;">Monto Total</th>
-                                <th style="min-width: 110px; color: white;">Pagado</th>
-                                <th class="hide-mobile" style="min-width: 90px; color: white;">Estado</th>
-                                <th style="min-width: 150px; color: white;">Observaciones</th>
+                                <th style="color: white; width: 90px;">Fecha</th>
+                                <th style="color: white; width: 110px;">Tipo</th>
+                                <th style="color: white; width: 115px;">Monto Total</th>
+                                <th style="color: white; width: 115px;">Pagado</th>
+                                <th style="color: white; width: 85px;">Estado</th>
+                                <th style="color: white;">Observaciones</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
-
             movimientos.forEach(mov => {
                 const tieneObservacion = mov.observaciones && mov.observaciones.trim() !== '';
                 const esNuevaFactura = mov.tipoMovimiento === 'Nueva factura/compra';
-                const rowStyle = tieneObservacion ? 'background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--danger-color);' : '';
-                
-                html += `
-                    <tr style="${rowStyle}">
-                        <td style="white-space: nowrap;">${formatDate(mov.fecha)}</td>
-                        <td class="hide-mobile">
-                            <span style="display: inline-block; padding: 0.25rem 0.5rem; background: ${esNuevaFactura ? 'rgba(139, 21, 56, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; color: ${esNuevaFactura ? 'var(--primary-color)' : 'var(--success-color)'}; border-radius: 8px; font-size: 0.7rem; font-weight: 600; white-space: nowrap;">
+                const rowBg = esNuevaFactura
+                    ? (tieneObservacion ? 'rgba(239,68,68,0.08)' : 'rgba(139,21,56,0.04)')
+                    : 'rgba(16,185,129,0.05)';
+                const borderLeft = esNuevaFactura
+                    ? (tieneObservacion ? '3px solid var(--danger-color)' : '3px solid var(--primary-color)')
+                    : '3px solid var(--success-color)';
+                htmlTabla += `
+                    <tr style="background:${rowBg}; border-left:${borderLeft};">
+                        <td style="white-space:nowrap; font-size:0.8rem;">${formatDate(mov.fecha)}</td>
+                        <td>
+                            <span style="display:inline-block; padding:0.2rem 0.45rem; background:${esNuevaFactura ? 'rgba(139,21,56,0.1)' : 'rgba(16,185,129,0.1)'}; color:${esNuevaFactura ? 'var(--primary-color)' : 'var(--success-color)'}; border-radius:6px; font-size:0.7rem; font-weight:700; white-space:nowrap;">
                                 ${esNuevaFactura ? '📄 Factura' : '💰 Pago'}
                             </span>
                         </td>
-                        <td class="amount" style="white-space: nowrap;">${formatCurrency(mov.montoTotal)}</td>
-                        <td class="amount ${mov.montoPagado > 0 ? 'positive' : ''}" style="white-space: nowrap;">${formatCurrency(mov.montoPagado)}</td>
-                        <td class="hide-mobile" style="font-size: 0.8rem;">${mov.estado}</td>
-                        <td style="${tieneObservacion ? 'font-weight: 600; color: var(--danger-color);' : ''} max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                        <td class="amount" style="white-space:nowrap;">${formatCurrency(mov.montoTotal)}</td>
+                        <td class="amount ${mov.montoPagado > 0 ? 'positive' : ''}" style="white-space:nowrap;">${formatCurrency(mov.montoPagado)}</td>
+                        <td style="font-size:0.78rem;">${mov.estado || '-'}</td>
+                        <td style="${tieneObservacion ? 'font-weight:600; color:var(--danger-color);' : 'color:var(--text-secondary);'} font-size:0.8rem;">
                             ${tieneObservacion ? '⚠️ ' + mov.observaciones : '-'}
                         </td>
                     </tr>
                 `;
             });
+            htmlTabla += `</tbody></table></div>`;
 
-            // Calcular total pagado sumando montoPagado de todos los movimientos
-            const totalPagado = movimientos.reduce((sum, mov) => sum + (mov.montoPagado || 0), 0);
+            // ── TARJETAS para móvil ─────────────────────────────────────────
+            let htmlCards = `<div class="historial-cards-mobile" style="display:flex; flex-direction:column; gap:0.6rem; max-height:460px; overflow-y:auto;">`;
+            movimientos.forEach(mov => {
+                const tieneObservacion = mov.observaciones && mov.observaciones.trim() !== '';
+                const esNuevaFactura = mov.tipoMovimiento === 'Nueva factura/compra';
+                const cardBg    = esNuevaFactura ? 'rgba(139,21,56,0.05)' : 'rgba(16,185,129,0.06)';
+                const accentColor = esNuevaFactura ? 'var(--primary-color)' : 'var(--success-color)';
+                const tipoLabel = esNuevaFactura ? '📄 Factura' : '💰 Pago';
+                htmlCards += `
+                    <div style="background:${cardBg}; border-left:4px solid ${accentColor}; border-radius:8px; padding:0.75rem 1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                            <span style="font-size:0.75rem; font-weight:700; color:${accentColor};">${tipoLabel}</span>
+                            <span style="font-size:0.75rem; color:var(--text-secondary);">${formatDate(mov.fecha)}</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.3rem 1rem; font-size:0.8rem;">
+                            <div>
+                                <span style="color:var(--text-secondary); font-size:0.7rem; display:block;">Monto Total</span>
+                                <span style="font-weight:600;">${formatCurrency(mov.montoTotal)}</span>
+                            </div>
+                            <div>
+                                <span style="color:var(--text-secondary); font-size:0.7rem; display:block;">Pagado</span>
+                                <span style="font-weight:600; color:${mov.montoPagado > 0 ? 'var(--success-color)' : 'inherit'};">${formatCurrency(mov.montoPagado)}</span>
+                            </div>
+                            <div style="grid-column:1/-1;">
+                                <span style="color:var(--text-secondary); font-size:0.7rem; display:block;">Estado</span>
+                                <span>${mov.estado || '-'}</span>
+                            </div>
+                            ${tieneObservacion ? `
+                            <div style="grid-column:1/-1; margin-top:0.2rem; padding:0.4rem 0.6rem; background:rgba(239,68,68,0.1); border-radius:6px; color:var(--danger-color); font-size:0.75rem; font-weight:600;">
+                                ⚠️ ${mov.observaciones}
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            htmlCards += `</div>`;
 
-            html += `
-                        </tbody>
-                    </table>
-                </div>
-                
+            let html = `
+                ${htmlTabla}
+                ${htmlCards}
+
                 <!-- Totales del proveedor -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.5rem;">
                     ${datosProveedor ? `
-                    <div style="padding: 1.25rem; background: var(--accent-light); border-radius: 12px; text-align: center; border-left: 4px solid var(--primary-color);">
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Acumulado</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(datosProveedor.totalAcumulado)}</div>
+                    <div style="padding:1.25rem; background:var(--accent-light); border-radius:12px; text-align:center; border-left:4px solid var(--primary-color);">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.5px;">Total Acumulado</div>
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--primary-color);">${formatCurrency(datosProveedor.totalAcumulado)}</div>
                     </div>
                     ` : ''}
-                    <div style="padding: 1.25rem; background: rgba(16, 185, 129, 0.08); border-radius: 12px; text-align: center; border-left: 4px solid var(--success-color);">
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Pagado</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color);">${formatCurrency(totalPagado)}</div>
+                    <div style="padding:1.25rem; background:rgba(16,185,129,0.08); border-radius:12px; text-align:center; border-left:4px solid var(--success-color);">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.5px;">Total Pagado</div>
+                        <div style="font-size:1.5rem; font-weight:700; color:var(--success-color);">${formatCurrency(totalPagado)}</div>
                     </div>
-                    ${datosProveedor && datosProveedor.pendiente > 0 ? `
-                    <div style="padding: 1.25rem; background: rgba(239, 68, 68, 0.08); border-radius: 12px; text-align: center; border-left: 4px solid var(--danger-color);">
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Pendiente</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color);">${formatCurrency(datosProveedor.pendiente)}</div>
-                    </div>
-                    ` : ''}
                 </div>
             `;
 
