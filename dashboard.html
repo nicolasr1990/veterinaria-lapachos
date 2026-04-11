@@ -448,9 +448,9 @@
         .modal-content {
             background: white;
             border-radius: 12px;
-            max-width: 500px;
+            max-width: 750px;
             width: 100%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideUp 0.3s ease;
@@ -1726,14 +1726,14 @@
             let html = `
                 <div class="data-table-wrapper" style="max-height: 500px; overflow-x: auto; overflow-y: auto;">
                     <table class="data-table" style="font-size: 0.875rem;">
-                        <thead style="position: sticky; top: 0; background: white; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <thead style="position: sticky; top: 0; background: var(--primary-color); z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                             <tr>
-                                <th style="min-width: 90px;">Fecha</th>
-                                <th class="hide-mobile" style="min-width: 100px;">Tipo</th>
-                                <th style="min-width: 110px;">Monto Total</th>
-                                <th style="min-width: 110px;">Pagado</th>
-                                <th class="hide-mobile" style="min-width: 90px;">Estado</th>
-                                <th style="min-width: 150px;">Observaciones</th>
+                                <th style="min-width: 90px; color: white;">Fecha</th>
+                                <th class="hide-mobile" style="min-width: 100px; color: white;">Tipo</th>
+                                <th style="min-width: 110px; color: white;">Monto Total</th>
+                                <th style="min-width: 110px; color: white;">Pagado</th>
+                                <th class="hide-mobile" style="min-width: 90px; color: white;">Estado</th>
+                                <th style="min-width: 150px; color: white;">Observaciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1762,18 +1762,33 @@
                 `;
             });
 
+            // Calcular total pagado sumando montoPagado de todos los movimientos
+            const totalPagado = movimientos.reduce((sum, mov) => sum + (mov.montoPagado || 0), 0);
+
             html += `
                         </tbody>
                     </table>
                 </div>
                 
-                <!-- Total Acumulado del proveedor -->
-                ${datosProveedor ? `
-                    <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--accent-light); border-radius: 12px; text-align: center;">
-                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ACUMULADO</div>
-                        <div style="font-size: 1.75rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(datosProveedor.totalAcumulado)}</div>
+                <!-- Totales del proveedor -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+                    ${datosProveedor ? `
+                    <div style="padding: 1.25rem; background: var(--accent-light); border-radius: 12px; text-align: center; border-left: 4px solid var(--primary-color);">
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Acumulado</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(datosProveedor.totalAcumulado)}</div>
                     </div>
-                ` : ''}
+                    ` : ''}
+                    <div style="padding: 1.25rem; background: rgba(16, 185, 129, 0.08); border-radius: 12px; text-align: center; border-left: 4px solid var(--success-color);">
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Total Pagado</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color);">${formatCurrency(totalPagado)}</div>
+                    </div>
+                    ${datosProveedor && datosProveedor.pendiente > 0 ? `
+                    <div style="padding: 1.25rem; background: rgba(239, 68, 68, 0.08); border-radius: 12px; text-align: center; border-left: 4px solid var(--danger-color);">
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Pendiente</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color);">${formatCurrency(datosProveedor.pendiente)}</div>
+                    </div>
+                    ` : ''}
+                </div>
             `;
 
             modalBody.innerHTML = html;
