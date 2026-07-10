@@ -23,11 +23,37 @@
             --text-secondary: #64748b;
             --border-color: #e8ddd0;
             --accent-light: #fff8f0;
+
+            /* Glassmorphism tokens */
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-bg-strong: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px rgba(107, 15, 43, 0.15);
+            --glass-blur: 18px;
+            --glass-blur-soft: 10px;
+            --header-glass-bg: rgba(139, 21, 56, 0.72);
+            --thead-glass-bg: rgba(139, 21, 56, 0.85);
+        }
+
+        /* Fallback para navegadores sin soporte de backdrop-filter */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            :root {
+                --glass-bg: #ffffff;
+                --glass-bg-strong: #ffffff;
+                --header-glass-bg: linear-gradient(135deg, var(--primary-color) 0%, #6B0F2B 100%);
+                --thead-glass-bg: var(--primary-color);
+            }
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #faf5f0 0%, #f5ede3 100%);
+            background:
+                radial-gradient(circle at 15% 15%, rgba(196, 163, 44, 0.25), transparent 40%),
+                radial-gradient(circle at 85% 25%, rgba(139, 21, 56, 0.22), transparent 45%),
+                radial-gradient(circle at 30% 85%, rgba(16, 185, 129, 0.15), transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(196, 163, 44, 0.18), transparent 40%),
+                linear-gradient(135deg, #faf5f0 0%, #f5ede3 100%);
+            background-attachment: fixed;
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
@@ -35,10 +61,13 @@
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #6B0F2B 100%);
+            background: var(--header-glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
             color: white;
             padding: 1rem 1.5rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            border-bottom: 1px solid rgba(255,255,255,0.25);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -77,8 +106,11 @@
 
         /* Navigation */
         .nav-tabs {
-            background: white;
-            border-bottom: 2px solid var(--border-color);
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 4px 16px rgba(107, 15, 43, 0.08);
             position: sticky;
             top: 82px;
             z-index: 99;
@@ -150,16 +182,20 @@
 
         /* Cards */
         .card {
-            background: var(--card-bg);
-            border-radius: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: var(--glass-shadow);
             margin-bottom: 1.5rem;
             transition: all 0.3s ease;
         }
 
         .card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: var(--glass-bg-strong);
+            box-shadow: 0 12px 36px rgba(107, 15, 43, 0.2);
             transform: translateY(-2px);
         }
 
@@ -185,16 +221,20 @@
         }
 
         .stat-card {
-            background: var(--card-bg);
-            border-radius: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: var(--glass-shadow);
             border-left: 4px solid var(--primary-color);
             transition: all 0.3s ease;
         }
 
         .stat-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: var(--glass-bg-strong);
+            box-shadow: 0 12px 36px rgba(107, 15, 43, 0.2);
             transform: translateY(-2px);
         }
 
@@ -249,11 +289,13 @@
 
         .month-selector select {
             padding: 0.75rem 1rem;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
             font-size: 1rem;
             cursor: pointer;
-            background: white;
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(var(--glass-blur-soft));
+            -webkit-backdrop-filter: blur(var(--glass-blur-soft));
             color: var(--text-primary);
             transition: all 0.3s ease;
         }
@@ -273,7 +315,9 @@
         }
 
         .data-table thead {
-            background: var(--primary-color);
+            background: var(--thead-glass-bg);
+            backdrop-filter: blur(var(--glass-blur-soft));
+            -webkit-backdrop-filter: blur(var(--glass-blur-soft));
             color: white;
         }
 
@@ -325,10 +369,13 @@
 
         /* Chart Container */
         .chart-container {
-            background: var(--card-bg);
-            border-radius: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: var(--glass-shadow);
             margin-bottom: 2rem;
         }
 
@@ -369,16 +416,37 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            /* iOS no soporta bien background-attachment:fixed y pesa mucho en scroll */
+            body {
+                background-attachment: scroll;
+            }
+
+            /* Menos blur en mobile: los navegadores móviles renderizan backdrop-filter
+               con más costo de batería/rendimiento que desktop */
+            :root {
+                --glass-blur: 10px;
+                --glass-blur-soft: 6px;
+            }
+
             .header-title h1 {
                 font-size: 1.25rem;
             }
 
             .stats-grid {
                 grid-template-columns: 1fr;
+                gap: 1rem;
             }
 
             .stat-value {
                 font-size: 1.75rem;
+            }
+
+            .card,
+            .stat-card,
+            .chart-container,
+            .accordion-item,
+            .modal-content {
+                border-radius: 14px;
             }
 
             .data-table {
@@ -394,7 +462,16 @@
                 padding: 1rem;
                 font-size: 0.875rem;
             }
-            
+
+            .modal.active {
+                padding: 0.75rem;
+                align-items: flex-end;
+            }
+
+            .modal-content {
+                max-height: 90vh;
+            }
+
             /* Ocultar columnas en móvil para modal de proveedores */
             .hide-mobile {
                 display: none !important;
@@ -442,7 +519,9 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(30, 10, 15, 0.45);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             animation: fadeIn 0.2s ease;
         }
 
@@ -454,13 +533,16 @@
         }
 
         .modal-content {
-            background: white;
-            border-radius: 12px;
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             max-width: 750px;
             width: 100%;
             max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
             animation: slideUp 0.3s ease;
         }
 
@@ -552,10 +634,13 @@
 
         /* Fix background issue for tables */
         .card {
-            background: var(--card-bg);
-            border-radius: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             padding: 0; /* Remove padding to let table fill */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: var(--glass-shadow);
             margin-bottom: 1.5rem;
             transition: all 0.3s ease;
             overflow: hidden; /* Prevent background cutoff */
@@ -563,21 +648,24 @@
 
         .data-table-wrapper {
             overflow-x: auto;
-            background: var(--card-bg);
+            background: transparent;
         }
 
         /* Acordeón */
         .accordion-item {
-            background: var(--card-bg);
-            border-radius: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             margin-bottom: 1rem;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: var(--glass-shadow);
             transition: all 0.3s ease;
         }
 
         .accordion-item:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 32px rgba(107, 15, 43, 0.18);
             transform: translateY(-2px);
         }
 
@@ -587,14 +675,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(135deg, var(--primary-color) 0%, #6B0F2B 100%);
+            background: var(--header-glass-bg);
+            backdrop-filter: blur(var(--glass-blur-soft));
+            -webkit-backdrop-filter: blur(var(--glass-blur-soft));
             color: white;
             user-select: none;
             transition: all 0.3s ease;
         }
 
         .accordion-header:hover {
-            background: linear-gradient(135deg, #6B0F2B 0%, var(--primary-color) 100%);
+            background: rgba(139, 21, 56, 0.85);
         }
 
         .accordion-title {
@@ -1323,7 +1413,7 @@
                                 <!-- Tabla Resumen por Categoría -->
                                 <div style="margin-top: 2rem; padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
                                     <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">📊 Resumen por Categoría</h4>
-                                    <table class="data-table" style="background: white;">
+                                    <table class="data-table" style="background: transparent;">
                                         <thead>
                                             <tr>
                                                 <th style="text-align: left;">Categoría</th>
@@ -1490,7 +1580,7 @@
                                     <!-- Tabla Por Tipo -->
                                     <div style="padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
                                         <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">📊 Por Tipo</h4>
-                                        <table class="data-table" style="background: white;">
+                                        <table class="data-table" style="background: transparent;">
                                             <thead>
                                                 <tr>
                                                     <th style="text-align: left;">Tipo</th>
@@ -1517,7 +1607,7 @@
                                     <!-- Tabla Por Medio de Cobro -->
                                     <div style="padding: 1.5rem; background: var(--accent-light); border-radius: 8px;">
                                         <h4 style="margin-bottom: 1rem; color: var(--primary-color); font-size: 1.1rem;">💳 Por Medio de Cobro</h4>
-                                        <table class="data-table" style="background: white;">
+                                        <table class="data-table" style="background: transparent;">
                                             <thead>
                                                 <tr>
                                                     <th style="text-align: left;">Medio de Cobro</th>
@@ -1611,7 +1701,7 @@
 
             let html = `
                 <!-- Buscador -->
-                <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--card-bg); border-radius: 12px;">
+                <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--glass-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--glass-border); border-radius: 14px;">
                     <div style="position: relative;">
                         <input 
                             type="text" 
@@ -1667,7 +1757,7 @@
                 </div>
                 
                 <!-- Tarjetas de totales al final -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border-radius: 12px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; padding: 1.5rem; background: var(--glass-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--glass-border); border-radius: 14px;">
                     <div style="padding: 1rem; background: rgba(139, 21, 56, 0.1); border-radius: 8px; border-left: 4px solid var(--primary-color);">
                         <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">TOTAL ACUMULADO</div>
                         <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${formatCurrency(totalAccumulated)}</div>
