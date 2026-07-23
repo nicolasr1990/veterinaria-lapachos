@@ -2,7 +2,6 @@ const CACHE_NAME = 'lapachos-v1';
 const ASSETS = [
   './index.html',
   './logo.png',
-  './Veterinaria.png',
   './manifest.json'
 ];
 
