@@ -4,8 +4,8 @@
   "description": "Sistema de Gestión - Veterinaria Los Lapachos",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#faf5f0",
-  "theme_color": "#0d0b1f",
+  "background_color": "#F6F3EE",
+  "theme_color": "#F6F3EE",
   "orientation": "portrait-primary",
   "icons": [
     {
