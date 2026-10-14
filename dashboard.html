@@ -107,7 +107,8 @@
   [data-mode="dark"] .icon-btn .sun { opacity: 1; transform: none; }
 
   /* ===== Contenido ===== */
-  main { padding: 8px 0 calc(var(--tabbar-h) + 40px + env(safe-area-inset-bottom)); }
+  main.wrap { padding-top: 8px; padding-bottom: calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom)); }
+  [hidden] { display: none !important; }
   .view { display: none; }
   .view.on { display: block; animation: viewIn 280ms var(--ease-out); }
   @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -233,12 +234,13 @@
   .search input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
 
   /* Barra inferior */
+  /* Barra inferior pegada al borde: tapa todo lo que queda debajo */
   .tabbar {
-    position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(10px + env(safe-area-inset-bottom));
-    width: calc(100% - 20px); max-width: 520px; height: var(--tabbar-h); z-index: 60;
-    background: var(--nav-bg); border-radius: 22px; display: flex; padding: 6px;
-    box-shadow: var(--shadow-nav); border: 1px solid var(--card-border);
-    backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    padding: 6px max(8px, calc(50% - 310px)) calc(6px + env(safe-area-inset-bottom));
+    background: var(--surface); display: flex; gap: 4px;
+    border-top: 1px solid var(--border); box-shadow: 0 -6px 20px rgba(0,0,0,.06);
   }
   .tab {
     flex: 1; border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 16px;
