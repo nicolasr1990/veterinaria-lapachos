@@ -43,7 +43,7 @@
     --pos: #2F7D4F; --neg: #B3261E; --warn: #A15C00;
     --border: #E6DED5; --divider: #EFE9E2; --card-border: transparent;
     --hero-bg: #7A1F3D; --hero-text: #FFFFFF; --hero-track: rgba(255,255,255,.18);
-    --seg-1: rgba(255,255,255,.6); --seg-2: rgba(255,255,255,.32); --seg-3: #C9D44E;
+    --seg-gasto: #FFFFFF; --seg-retiro: #F2B85B; --seg-neto: #C9D44E; --seg-cubierto: rgba(255,255,255,.45); --seg-falta: #FF8A80;
     --nav-bg: rgba(255,255,255,.92); --nav-on: #7A1F3D; --nav-on-bg: #F5E8EC;
     --top-bg: rgba(246,243,238,.86);
     --shadow-sm: 0 1px 2px rgba(42,26,32,.08);
@@ -58,7 +58,7 @@
     --pos: #7FCB8E; --neg: #FF8A80; --warn: #F2B85B;
     --border: rgba(255,255,255,.09); --divider: rgba(255,255,255,.06); --card-border: rgba(255,255,255,.06);
     --hero-bg: #5E1730; --hero-text: #FFFFFF; --hero-track: rgba(255,255,255,.14);
-    --seg-1: rgba(255,255,255,.55); --seg-2: rgba(255,255,255,.28); --seg-3: #C9D44E;
+    --seg-gasto: #FFFFFF; --seg-retiro: #F2B85B; --seg-neto: #C9D44E; --seg-cubierto: rgba(255,255,255,.45); --seg-falta: #FF8A80;
     --nav-bg: rgba(28,23,25,.88); --nav-on: #2A0E18; --nav-on-bg: #E58AA6;
     --top-bg: rgba(18,16,17,.86);
     --shadow-sm: 0 0 0 1px rgba(255,255,255,.06);
@@ -141,10 +141,17 @@
   }
   .hero .lbl { font-size: 12px; font-weight: 600; opacity: .82; letter-spacing: .02em; }
   .hero .big { font-family: var(--font-head); font-weight: 700; font-size: 34px; letter-spacing: -.02em; margin: 4px 0 14px; line-height: 1.1; }
-  .split { height: 8px; border-radius: 99px; background: var(--hero-track); display: flex; overflow: hidden; gap: 2px; }
+  .hero-cap { font-size: 12.5px; opacity: .88; margin-bottom: 8px; }
+  .split { height: 10px; border-radius: 99px; background: var(--hero-track); display: flex; overflow: hidden; gap: 2px; }
   .split span { height: 100%; transition: width 500ms var(--ease-out); }
-  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 11.5px; opacity: .9; }
-  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+  .hero-items { display: grid; gap: 6px; margin-top: 12px; font-size: 13.5px; }
+  .hero-items > div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .hero-items > div > span { white-space: nowrap; }
+  .hero-items > div > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 360px) { .hero-items { font-size: 12.5px; } .hero-cap { font-size: 12px; } }
+  .hero-items i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; }
+  .hero-items b { font-weight: 700; white-space: nowrap; }
+  .hero-items em { font-style: normal; font-weight: 500; opacity: .72; margin-left: 6px; display: inline-block; min-width: 3.2ch; text-align: right; }
 
   /* Filas */
   .row {
@@ -210,7 +217,9 @@
   .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .kpi { padding: 14px; }
   .kpi .l { font-size: 12px; color: var(--muted); font-weight: 600; }
-  .kpi .v { font-family: var(--font-head); font-weight: 700; font-size: 19px; letter-spacing: -.01em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 360px) { .kpis { grid-template-columns: 1fr; } }
+  .dec { font-size: max(.72em, 11px); font-weight: 600; opacity: .72; margin-left: 1px; }
+  .kpi .v { font-family: var(--font-head); font-weight: 700; font-size: 18px; letter-spacing: -.01em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* Buscador */
   .search { position: relative; margin-bottom: 14px; }
@@ -441,11 +450,13 @@
     if (str.includes('/')) { const [d, m, y] = str.split('/').map(Number); return new Date(y, m - 1, d); }
     return new Date(str);
   }
-  // En listas y resúmenes se redondea (entra en pantalla chica); el detalle muestra el monto exacto
-  const fmt0 = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  // Siempre con centavos; los centavos van más chicos para que el monto entre en pantalla y se lea rápido
   const fmt2 = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const money = n => fmt0.format(n);
-  const exact = n => (Math.round(n) === n ? fmt0 : fmt2).format(n);
+  function money(n) {
+    let ent = '', dec = '';
+    fmt2.formatToParts(n).forEach(p => { if (p.type === 'decimal' || p.type === 'fraction') dec += p.value; else ent += p.value; });
+    return `${ent}<span class="dec">${dec}</span>`;
+  }
   function fmtDate(s) {
     const d = parseFecha(s);
     return isNaN(d) ? (s || '-') : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -509,14 +520,28 @@
     chipsListos = true;
   }
 
+  // Barra del resultado: el 100% es lo que entró en el mes. Si salió más de lo que entró, muestra lo cubierto y el faltante.
+  function desglose(d, neto) {
+    const salio = d.gastos + d.retiros;
+    const item = (color, texto, monto, pct) => `<div><span><i style="background:var(${color})"></i>${texto}</span><span class="num"><b>${money(monto)}</b>${pct === undefined ? '' : `<em>${pct}%</em>`}</span></div>`;
+    if (!d.ingresos && !salio) return `<div class="hero-cap">Todavía no hay movimientos este mes.</div>`;
+    if (neto >= 0) {
+      const g = Math.round(d.gastos / d.ingresos * 100), r = Math.round(d.retiros / d.ingresos * 100);
+      return `<div class="hero-cap">De lo que entró este mes (${money(d.ingresos)}):</div>
+        <div class="split"><span style="width:${d.gastos / d.ingresos * 100}%;background:var(--seg-gasto)"></span><span style="width:${d.retiros / d.ingresos * 100}%;background:var(--seg-retiro)"></span><span style="flex:1;background:var(--seg-neto)"></span></div>
+        <div class="hero-items">${item('--seg-gasto', 'Se fue en gastos', d.gastos, g)}${item('--seg-retiro', 'Se fue en retiros', d.retiros, r)}${item('--seg-neto', 'Te quedó', neto, 100 - g - r)}</div>`;
+    }
+    return `<div class="hero-cap">Lo que salió (${money(salio)}) superó lo que entró (${money(d.ingresos)}):</div>
+      <div class="split"><span style="width:${d.ingresos / salio * 100}%;background:var(--seg-cubierto)"></span><span style="flex:1;background:var(--seg-falta)"></span></div>
+      <div class="hero-items">${item('--seg-cubierto', 'Cubierto con lo que entró', d.ingresos)}${item('--seg-falta', 'Faltante (pérdida)', -neto)}</div>`;
+  }
+
   function paintInicio() {
     const d = appData.totales[mesIdx];
     document.querySelectorAll('#months .chip').forEach((c, i) => c.classList.toggle('on', i === mesIdx));
     centerChip(true);
 
     const neto = d.ingresos - d.gastos - d.retiros;
-    const base = Math.max(d.ingresos, d.gastos + d.retiros, 1);
-    const pG = d.gastos / base * 100, pR = d.retiros / base * 100, pN = Math.max(neto, 0) / base * 100;
     const mes = d.mes.toLowerCase();
     const key = `${d.mes} ${d.año}`.toLowerCase();
     const cuenta = (list, noun, plural) => {
@@ -528,8 +553,7 @@
       <div class="hero">
         <div class="lbl">Resultado neto · ${esc(mes)} ${d.año}</div>
         <div class="big num">${money(neto)}</div>
-        <div class="split"><span style="width:${pG}%;background:var(--seg-1)"></span><span style="width:${pR}%;background:var(--seg-2)"></span><span style="width:${pN}%;background:var(--seg-3)"></span></div>
-        <div class="legend"><span><i style="background:var(--seg-1)"></i>Gastos ${Math.round(pG)}%</span><span><i style="background:var(--seg-2)"></i>Retiros ${Math.round(pR)}%</span><span><i style="background:var(--seg-3)"></i>Neto ${Math.round(pN)}%</span></div>
+        ${desglose(d, neto)}
       </div>
       <div class="card">
         <button class="row" onclick="irA('ingresos','${esc(d.mes)}')"><div class="ico pos">${ICONS.down}</div><div class="mid"><div class="name">Ingresos</div><div class="sub">${cuenta(appData.ingresos, 'ingreso', 'ingresos')}</div></div><div class="amt num pos-t">${money(d.ingresos)}</div>${ICONS.chev}</button>
@@ -640,15 +664,15 @@
     const it = reg[i];
     const tag = it.estado === 'Pagado total' ? 'pos' : it.estado === 'A deber' ? 'neg' : 'warn';
     openSheet(it.proveedor || it.subcategoria || 'Gasto', `
-      <div class="d-big num neg-t">${exact(it.montoTotal)}</div>
+      <div class="d-big num neg-t">${money(it.montoTotal)}</div>
       ${dl([['Fecha', fmtDate(it.fecha)], ['Categoría', esc(it.categoria)], ['Subcategoría', esc(it.subcategoria)], ['Proveedor', esc(it.proveedor)],
-        ['Pagado', `<span class="num">${exact(it.montoPagado)}</span>`], ['Estado', it.estado ? `<span class="tag ${tag}">${esc(it.estado)}</span>` : ''], ['Medio de pago', esc(it.medioPago)]])}
+        ['Pagado', `<span class="num">${money(it.montoPagado)}</span>`], ['Estado', it.estado ? `<span class="tag ${tag}">${esc(it.estado)}</span>` : ''], ['Medio de pago', esc(it.medioPago)]])}
       ${it.observaciones ? `<div class="note">${esc(it.observaciones)}</div>` : ''}`);
   }
   function detalleIngreso(i) {
     const it = reg[i];
     openSheet(it.tipo || 'Ingreso', `
-      <div class="d-big num pos-t">${exact(it.monto)}</div>
+      <div class="d-big num pos-t">${money(it.monto)}</div>
       ${dl([['Fecha', fmtDate(it.fecha)], ['Concepto', esc(it.concepto)], ['Tipo', esc(it.tipo)], ['Medio de cobro', esc(it.medioCobro)]])}
       ${it.observaciones ? `<div class="note" style="background:var(--surface-2);color:var(--text);font-weight:500">${esc(it.observaciones)}</div>` : ''}`);
   }
@@ -667,8 +691,8 @@
       return `<div class="mov">
         <div class="mov-top"><span class="tag ${fact ? 'pri' : 'pos'}">${fact ? 'Factura' : 'Pago'}</span><span class="num">${fmtDate(m.fecha)}</span></div>
         <div class="mov-grid">
-          <div><small>Monto total</small><b class="num">${exact(m.montoTotal)}</b></div>
-          <div><small>Pagado</small><b class="num ${m.montoPagado > 0 ? 'pos-t' : ''}">${exact(m.montoPagado)}</b></div>
+          <div><small>Monto total</small><b class="num">${money(m.montoTotal)}</b></div>
+          <div><small>Pagado</small><b class="num ${m.montoPagado > 0 ? 'pos-t' : ''}">${money(m.montoPagado)}</b></div>
           <div style="grid-column:1/-1"><small>Estado</small>${esc(m.estado || '-')}</div>
         </div>
         ${m.observaciones && m.observaciones.trim() ? `<div class="note">${esc(m.observaciones)}</div>` : ''}
